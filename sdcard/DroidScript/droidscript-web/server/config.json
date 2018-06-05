@@ -1,0 +1,1 @@
+{"port":8082,"sport":8444,"username":{"admin":"admin"},"password":{"admin":"changeme"},"realm":{"admin":"WiFi Administration"},"debug":"all","sdcard":"/sdcard","appsDir":"/sdcard/DroidScript","apksDir":"/sdcard/DroidScript/APKs", "autoboots":[]}

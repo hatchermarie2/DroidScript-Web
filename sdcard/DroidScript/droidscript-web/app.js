@@ -16,7 +16,8 @@
  
 // _dbg = true; _map = []; _scripts = [];
 // _cbMap = []; _cbId=0; _docs = false; _busy = false;
-// _btl = null; _lvw = null; _ldg = null; 
+// _btl = null; _lvw = null; 
+_ldg = null; 
 _ynd = null;
 // _nxt = null; _smw = null;
 // _inf = null; _rec = null; _pst = null;
@@ -47,7 +48,10 @@ function App(impl)
 // 	this.SendIntent = function( packageName,className,action,category,data,type,extras,options ) { prompt( "#", "App.SendIntent(\f"+packageName+"\f"+className+"\f"+action+"\f"+category+"\f"+data+"\f"+type+"\f"+extras+"\f"+options ); }
 // 	this.BroadcastIntent = function( action,category,data,type,extras ) { prompt( "#", "App.BroadcastIntent(\f"+action+"\f"+category+"\f"+data+"\f"+type+"\f"+extras ); }
 // 	this.SendMessage = function( msg ) { prompt( "#", "App.SendMessage(\f"+msg ); }
-// 	this.LoadScript = function( url, callback ) { _LoadScript( url, callback ); }
+ 	this.LoadScript = function( url, callback ) { 
+        //_LoadScript( url, callback ); 
+        $import(url, callback);
+    }
 // 	this.LoadPlugin = function( url ) { _LoadPlugin( url ); }
 // 	this.Try = function( p1,p2,p3 ) { return prompt( "#", "App.Try(\f"+p1+"\f"+p2+"\f"+p3 ); } 
 // 	this.SysExec = function( cmd,options ) { return prompt( "#", "App.SysExec(\f"+cmd+"\f"+options ); } 
@@ -108,7 +112,7 @@ function App(impl)
 // 	this.GetKeyboardHeight = function() { return prompt( "#", "App.GetKeyboardHeight(" ); }
 // 	this.TextToSpeech = function( text,pitch,rate,callback,stream ) { prompt( "#", "App.TextToSpeech(\f"+text+"\f"+pitch+"\f"+rate+"\f"+(callback?callback.name:null)+"\f"+stream ); }
  	this.Debug = function( msg ) { this.impl.Debug(msg); }
-// 	this.SetDebugEnabled = function( enable ) { prompt( "#", "App.SetDebugEnabled("+enable ); _dbg=enable; }
+ 	this.SetDebugEnabled = function( enable ) { this.impl.SetDebugEnabled(enable); _dbg=enable; }
 // 	this.CreateDebug = function() { prompt( "#", "App.CreateDebug(" ); }
 // 	this.ShowDebug = function( show ) { prompt( "#", "App.ShowDebug("+show ); }
 // 	this.SendMail = function( address,subject,body,attach ) { prompt( "#", "App.SendMail("+address+"\f"+subject+"\f"+body+"\f"+attach ); }		
@@ -123,9 +127,9 @@ function App(impl)
 // 	this.ShowProgressBar = function( title,percent ) { prompt( "#", "App.ShowProgressBar(\f"+title+"\f"+percent ); }	
 // 	this.UpdateProgressBar = function( percent ) { prompt( "#", "App.UpdateProgressBar(\f"+percent ); }	
 // 	this.HideProgressBar = function() { prompt( "#", "App.HideProgressBar(" ); }	
-// 	this.LoadText = function( name,dflt,file ) { return prompt( "#", "App.LoadText("+name+"\f"+dflt+"\f"+file ); }
+ 	this.LoadText = function( name,dflt,file ) { return this.impl.LoadText( name, dflt, file ); }
  	this.LoadNumber = function( name,dflt,file ) { return parseFloat(this.impl.LoadNumber( name, dflt, file )); }
-// 	this.LoadBoolean = function( name,dflt,file ) { return (prompt( "#", "App.LoadBoolean("+name+"\f"+dflt+"\f"+file )=="true"); }
+ 	this.LoadBoolean = function( name,dflt,file ) { return this.impl.LoadBoolean( name, dflt, file )=="true"; }
 // 	this.SaveText = function( name,value,file ) { prompt( "#", "App.SaveText("+name+"\f"+value+"\f"+file ); }
 // 	this.SaveNumber = function( name,value,file ) { prompt( "#", "App.SaveNumber("+name+"\f"+value+"\f"+file ); }	
 // 	this.SaveBoolean = function( name,value,file ) { prompt( "#", "App.SaveBoolean("+name+"\f"+value+"\f"+file ); }	
@@ -133,7 +137,7 @@ function App(impl)
 // 	this.GetTop = function() { return parseFloat(prompt( "#", "App.GetTop(" )); }
  	this.GetScreenWidth = function() { return this.impl.GetScreenWidth(); }
  	this.GetScreenHeight = function() { return this.impl.GetScreenHeight(); }
-// 	this.GetScreenDensity = function() { return parseFloat(prompt( "#", "App.GetScreenDensity(" )); }
+ 	this.GetScreenDensity = function() { return this.impl.GetScreenDensity(); }
  	this.GetDisplayWidth = function() { return this.impl.GetDisplayWidth(); }
  	this.GetDisplayHeight = function() { return this.impl.GetDisplayHeight(); }
 // 	this.GetDefaultOrientation = function() { return prompt( "#", "App.GetDefaultOrientation(" ); }	
@@ -169,7 +173,7 @@ function App(impl)
 // 	this.GetInternalFolder = function() { return prompt( "#", "App.GetInternalFolder(" ); }
 // 	this.GetSpecialFolder = function( name ) { return prompt( "#", "App.GetSpecialFolder(\f"+name ); }
 // 	this.GetEnv = function( name ) { return prompt( "#", "App.GetEnv(\f"+name ); }
-// 	this.ReadFile = function( file,encoding ) { return prompt( "#", "App.ReadFile(\f"+file+"\f"+encoding ); }
+ 	this.ReadFile = function( file,encoding ) { return this.impl.ReadFile(file, encoding); }
 // 	this.WriteFile = function( file,text,mode,encoding ) { prompt( "#", "App.WriteFile(\f"+file+"\f"+text+"\f"+mode+"\f"+encoding ); }	
 // 	this.OpenFile = function( file,type,choose ) { prompt( "#", "App.OpenFile(\f"+file+"\f"+type+"\f"+choose ); }	
 // 	this.OpenUrl = function( url ) { prompt( "#", "App.OpenUrl("+url); }
@@ -229,7 +233,7 @@ function App(impl)
 	
 	//These objects auto-release (ie. single instance)
 	this.CreateYesNoDialog = function( msg ) { if( _ynd ) _ynd.Release(); var ret = this.impl.CreateYesNoDialog(msg); if( ret ) _ynd = new Ynd(ret); else _ynd = null; return _ynd; }		
-	// this.CreateListDialog = function( title,list,options ) { if( _ldg ) _ldg.Release(); var ret = prompt( "#", "App.CreateListDialog("+title+"\f"+list+"\f"+options ); if( ret ) _ldg = new Ldg(ret); else _ldg = null; return _ldg; }	
+	this.CreateListDialog = function( title,list,options ) { if( _ldg ) _ldg.Release(); var ret = this.impl.CreateListDialog(title, list, options); if( ret ) _ldg = new Ldg(ret); else _ldg = null; return _ldg; }	
 	// this.CreateListView = function( list,title,options ) { if( _lvw ) _lvw.Release(); var ret = prompt( "#", "App.CreateListView(\f"+list+"\f"+title+"\f"+options ); if( ret ) _lvw = new Lvw(ret); else _lvw = null; return _lvw; }	
 	// this.CreateBluetoothList = function( filter ) { if( _btl ) _btl.Release(); var ret = prompt( "#", "App.CreateBluetoothList("+filter ); if( ret) _btl = new Btl(ret); else _btl = null; return _btl; }	
 	// this.CreateAudioRecorder = function() { if( _rec ) _rec.Release(); var ret = prompt( "#", "App.CreateAudioRecorder(" ); if( ret) _rec = new Rec(ret); else _rec = null; return _rec; }
@@ -244,13 +248,22 @@ function App(impl)
 	this.CreateDialog = function( title,options ) { var ret = this.impl.CreateDialog(title, options); if( ret ) return new Dlg(ret); else return null; }		
 	// this.CreateMediaPlayer = function() { var ret = prompt( "#", "App.CreateMediaPlayer(" ); if( ret ) return new Aud(ret); else return null; }
 	// this.CreateSensor = function( type,options ) { var ret = prompt( "#", "App.CreateSensor("+type+"\f"+options ); if( ret ) return new Sns(ret); else return null; }		
-	// this.CreateLocator = function( type,options ) { var ret = prompt( "#", "App.CreateLocator("+type+"\f"+options ); if( ret ) return new Loc(ret); else return null; }		
+	this.CreateLocator = function( type,options ) { var ret = this.impl.CreateLocator( type, options ); if( ret ) return new Loc(ret); else return null; }		
 	// this.CreateNetClient = function( type ) { var ret = prompt( "#", "App.CreateNetClient("+type ); if( ret ) return new Net(ret); else return null; }
 	// this.CreateNxtRemote = function() { var ret = prompt( "#", "App.CreateNxtRemote(" ); if( ret ) return new Nxt(ret,null); else return null; }	
 	// this.CreateWebServer = function( port,options ) { var ret = prompt( "#", "App.CreateWebServer("+port+"\f"+options ); if( ret ) return new Wbs(ret); else return null; }	
+	this.CreateWebSocket = function( id, ip, port, options ) { var ret = this.impl.CreateWebSocket(id, ip, port, options ); if( ret ) return new Wsk(ret); else return null; }	
 	// this.CreateUSBSerial = function( baudRate,dataBits,stopBits,parity,device ) { var ret = prompt( "#", "App.CreateUSBSerial(\f"+baudRate+"\f"+dataBits+"\f"+stopBits+"\f"+parity+"\f"+device ); if( ret ) return new Usb(ret); else return null; }	
 	// this.CreateSysProc = function( cmd ) { var ret = prompt( "#", "App.CreateSysProc(\f"+cmd ); if( ret ) return new Sys(ret); else return null; }	
-	// this.CreateService = function( packageName,className,callback,options ) { var ret = prompt( "#", "App.CreateService(\f"+packageName+"\f"+className+"\f"+options+"\f"+(callback?callback.name:null) ); if( ret ) return new Svc(ret); else return null; }	
+	this.CreateService = function( packageName,className,callback,options ) { 
+        var ret = this.impl.CreateService(packageName, className, options, callback); 
+        if( ret ) {
+            var ret2=new Svc(ret);
+            ret2.Start();
+            return ret2;
+        }
+        else return null;
+    }
 	// this.CreateObject = function( name ) { try { return eval( "new "+name+"()" ); } catch(e) { return null; } }	
 	// this.CreateSynth = function( type ) { var ret = prompt( "#", "App.CreateSynth("+type ); if( ret ) return new Syn(ret); else return null; }	
 	// this.CreateBluetoothSerial = function( mode ) { var ret = prompt( "#", "App.CreateBluetoothSerial(\f"+mode ); if( ret ) return new Bts(ret); else return null; }	
@@ -266,7 +279,7 @@ function App(impl)
 	
 	// //Helper classes.
 	// this.CreateNxt = function() { var nxtHelp = new _NxtHelp(); return nxtHelp.nxt_CreateNxt(); }
-	// this.CreateTabs = function( list,width,height,options ) { return new _Tabs( list,width,height,options ); }
+	this.CreateTabs = function( list,width,height,options ) { return new _Tabs( list,width,height,options ); }
 	
 	// //Hybrid objects.
 	// this.CreateGLView = function( width,height,options ) 
@@ -314,6 +327,8 @@ function App(impl)
 	// 	db.Delete = function() { sqlitePlugin.deleteDatabase(db.name,_Log,_Err); }
 	// 	return db;
 	// }
+	this.AddDrawer = function( drawer ) { console.log("FIXME: AddDrawer"); this.impl.AddLayout(drawer); }	
+	this.RemoveDrawer = function( drawer ) { console.log("FIXME: RemoveDrawer"); this.impl.RemoveLayout(drawer); }	
 }
 
 function SObj( impl )
@@ -367,6 +382,7 @@ function Lay( impl )
     obj.GetChildOrder = function( child ) { return parseInt(this.impl.GetChildOrder((child?child.impl:null))); }  
     obj.Animate = function( type,callback ) { this.impl.Animate(type, callback); }
     obj.SetTouchable = function( touchable ) { this.impl.SetTouchable(touchable); }
+    obj.detach = function() { this.impl.detach(); }
     return obj;
 }
 
@@ -670,6 +686,7 @@ function Lst( impl )
     obj.SetDivider = function( height,color ) { this.impl.SetDivider(height, color); }
     obj.SetFontFile = function( file ) { this.impl.SetFontFile(file); }  
 	obj.SetIconSize = function( size,mode ) { this.impl.SetIconSize(size,mode); }  
+	obj.SetColumnWidths = function( w1, w2, w3 ) { this.impl.SetColumnWidths(w1,w2,w3); }
     return obj;
 }
 
@@ -741,17 +758,18 @@ function Ynd( impl )
 //     return obj; 
 // }
 
-// function Ldg( id )
-// {
-//     var obj = new SObj( id );  
-//     obj.GetType = function() { return "ListDialog"; } 
-//     obj.SetOnTouch = function( callback ) { prompt( obj.id, "Ldg.SetOnClick("+callback.name ); }
-//     obj.SetTitle = function( title ) { prompt( obj.id, "Ldg.SetTitle(\f"+ title ); }
-//     obj.SetTitleHeight = function( height,options ) { prompt( obj.id, "Ldg.SetTitleHeight(\f"+height+"\f"+options ); }
-// 	obj.SetBackColor = function( clr ) { prompt( obj.id, "Ldg.SetBackColor(\f"+clr ); } 
-// 	obj.SetSize = function( width,height,options ) { prompt( obj.id, "Ldg.SetSize(\f"+width+"\f"+height+"\f"+options ); }
-//     return obj;    
-// }
+function Ldg( impl )
+{
+    var obj = new SObj( impl );  
+    obj.GetType = function() { return "ListDialog"; } 
+    obj.SetOnTouch = function( callback ) { this.impl.SetOnTouch(callback); }
+    obj.SetTitle = function( title ) { this.impl.SetTitle(title); }
+    obj.SetTitleHeight = function( height,options ) { this.impl.SetTitleHeight(height, options ); }
+	obj.SetTextColor = function( clr ) { this.impl.SetTextColor(clr ); } 
+	obj.SetBackColor = function( clr ) { this.impl.SetBackColor(clr ); } 
+	obj.SetSize = function( width,height,options ) { this.impl.SetSize(width, height, options ); }
+    return obj;    
+}
 
 // function Btl( id )
 // {
@@ -881,18 +899,18 @@ function Dwn( impl )
 //     return obj;
 // }
 
-// function Loc( id )
-// {
-//     var obj = new SObj( id );    
-//     obj.GetType = function() { return "Locator"; }
-//     obj.SetOnChange = function( callback ) { prompt( obj.id, "Loc.SetOnChange("+callback.name ); } 
-//     obj.Start = function() { prompt( obj.id, "Loc.Start(" ); }
-//     obj.Stop = function() { prompt( obj.id, "Loc.Stop(" ); }
-//     obj.SetRate = function( rate ) { prompt( obj.id, "Loc.SetRate("+rate ); } 
-//     obj.GetDistanceTo = function( lat,lng ) { return parseFloat(prompt( obj.id, "Loc.GetDistanceTo("+lat+"\f"+lng )); }
-//     obj.GetBearingTo = function( lat,lng ) { return parseFloat(prompt( obj.id, "Loc.GetBearingTo("+lat+"\f"+lng )); }
-//     return obj;
-// }
+function Loc( impl )
+{
+    var obj = new SObj( impl );    
+    obj.GetType = function() { return "Locator"; }
+    obj.SetOnChange = function( callback ) { this.impl.SetOnChange(callback); } 
+    obj.Start = function() { this.impl.Start(); }
+    obj.Stop = function() { this.impl.Stop(); }
+    obj.SetRate = function( rate ) { this.impl.SetRate(rate); } 
+    obj.GetDistanceTo = function( lat,lng ) { return parseFloat(this.impl.GetDistanceTo(lat, lng)); }
+    obj.GetBearingTo = function( lat,lng ) { return parseFloat(this.impl.GetBearingTo(lat, lng)); }
+    return obj;
+}
 
 // function Pst( id )
 // {
@@ -1170,6 +1188,19 @@ function Dwn( impl )
 //     return obj;
 // }
 
+function Wsk( impl )
+{
+    var obj = new SObj( impl );
+ 	obj.GetType = function() { return "WebSocket"; }
+    obj.SetOnMessage = function( callback ) { this.impl.SetOnMessage(callback); }
+    obj.SetOnOpen = function( callback ) { this.impl.SetOnOpen(callback); }
+    obj.SetOnClose = function( callback ) { this.impl.SetOnClose(callback); }
+    obj.Close = function( callback ) { this.impl.Close(callback); }
+    obj.IsOpen = function( callback ) { return this.impl.IsOpen(callback); }
+    obj.Send = function( callback ) { this.impl.Send(callback); }
+    return obj;
+}
+
 // function Usb( id )
 // {
 // 	var obj = new SObj( id );
@@ -1233,19 +1264,21 @@ function Dwn( impl )
 //     return obj;
 // }
 
-// function Svc( id )
-// {
-// 	var obj = new SObj( id );
-// 	obj.GetType = function() { return "Service"; }
-// 	obj.Stop = function() { prompt( obj.id, "Svc.Stop(" ); }
-//     obj.Send = function( cmd,p1,p2,p3,p4,p5,p6,p7 ) { 
-// 		prompt( obj.id, "Svc.Send(\f"+cmd+"\f"+typeof p1+"\f"+p1+"\f"+typeof p2+"\f"+p2+"\f"+typeof p3+"\f"+p3+"\f"+typeof p4+"\f"+p4+"\f"+typeof p5+"\f"+p5+"\f"+typeof p6+"\f"+p6+"\f"+typeof p7+"\f"+p7 ); 
-// 	}
-// 	obj.SendImg = function( cmd,img ) { prompt( obj.id, "Svc.SendImg(\f"+cmd+"\f"+(img?img.id:null) ); }
-// 	obj.SendMessage = function( msg ) { prompt( obj.id, "Svc.SendMsg(\f"+msg ); }
-// 	obj.SetOnMessage = function( callback ) { prompt( obj.id, "Svc.SetOnMessage(\f"+callback.name ); }
-//     return obj;
-// }
+function Svc( impl )
+{
+	var obj = new SObj( impl );
+	obj.GetType = function() { return "Service"; }
+	obj.Stop = function() { this.impl.Stop(obj); }
+    obj.Send = function( cmd,p1,p2,p3,p4,p5,p6,p7 ) { 
+		this.impl.Send(obj, cmd, [typeof p1, p1, typeof p2, p2, typeof p3, p3, typeof p4, p4, typeof p5, p5, typeof p6, p6, typeof p7, p7]);
+	}
+	obj.SendImg = function( cmd,img ) { this.impl.SendImg(obj, cmd, img); }
+	obj.SendMessage = function( msg ) { this.impl.SendMsg(obj, msg); }
+	obj.SetOnMessage = function( callback ) { this.impl.SetOnMessage(obj, callback); }
+	obj.Start = function() { this.impl.Start(obj); }
+	
+    return obj;
+}
 
 // function Syn( id )
 // {

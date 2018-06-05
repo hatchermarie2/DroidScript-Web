@@ -1,0 +1,23 @@
+{
+  "name": "droidscript-web",
+  "version": "1.0.0",
+  "description": "Framework which allows DroidScript apps to be converted into mobile and desktop HTML5 apps with virtually no code changes.",
+  "main": "dsmain.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://downwa:PourHisBless1ng@github.com/DroidScript/DroidScript-Web.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DroidScript/DroidScript-Web/issues"
+  },
+  "homepage": "https://github.com/DroidScript/DroidScript-Web#readme",
+  "dependencies": {
+    "node-column-parser": "^1.0.1",
+    "node-ipc": "^9.1.1"
+  }
+}
