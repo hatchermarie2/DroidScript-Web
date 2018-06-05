@@ -22,6 +22,7 @@ var _files=[];
 var _started = false;
 var _menu="";
 var _backPressed=0;
+var _front_child_index=99;
 
 function _getGUIImpl()
 {
@@ -38,6 +39,8 @@ function JQueryMoble()
  	this.GetScreenHeight = function() { return $(window).height() };
  	this.GetDisplayWidth = function() { return $(window).width() };
  	this.GetDisplayHeight = function() { return $(window).height() };
+	this.GetScreenDensity = function() { return 96; }; // nominal Dots per Inch for desktop displays.  No way to actually know on the web.  See https://stackoverflow.com/questions/21680629/getting-the-physical-screen-dimensions-dpi-pixel-density-in-chrome-on-androi/25069057?utm_medium=organic
+	this.SetDebugEnabled = function(enable) { console.log("ERROR: SetDebugEnabled not implemented server-side yet."); };
 	this.GetOrientation = function() {
         if(_h > _w) { return "Portrait"; }
         return "Landscape";
@@ -45,6 +48,7 @@ function JQueryMoble()
 	
 	this.CreateLayout = function( type, options ) { return new JQueryMobile_Lay(type, options);	};
 	this.CreateScroller = function( width, height, options ) { return new JQueryMobile_Scr(width, height, options);	};
+	this.CreateService = function( packageName, className, options, callback ) { return new JQueryMobile_Service(packageName, className, options, callback); };
     this.CreateDownloader = function() { return new JQueryMobile_Dwn(); }
 	this.CreateImage = function(file, width, height, options, w, h) { return new JQueryMobile_Img(file, width, height, options, w, h); };
 	this.CreateButton = function(title, width, height, options) { return new JQueryMobile_Btn(title, width, height, options); };
@@ -53,6 +57,7 @@ function JQueryMoble()
 	this.CreateCheckBox = function(text, width, height, options) { return new JQueryMobile_Chk(text, width, height, options); };
 	this.CreateSpinner = function(list, width, height, options) { return new JQueryMobile_Spn(list, width, height, options); };
 	this.CreateList = function(list, width, height, options) { return new JQueryMobile_Lst(list, width, height, options); };
+    this.CreateLocator = function(type, options) { return new JQueryMobile_Loc(type, options); };
 	this.CreatePanel = function(options) 
 	{ 
 		var panel = new JQueryMobile_Pnl(options);
@@ -95,7 +100,22 @@ function JQueryMoble()
 		}
 		return dialog;
 	};
+    this.CreateListDialog = function(title, list, options) 
+    {
+		var dialog = new JQueryMobile_LstDlg(title, list, options);
+		if(dialog !== null) 
+		{ 
+			getPage().append(dialog);
+			dialog.popup();
+			dialog.popup("open");
+		}
+		return dialog;
+    }
 	this.CreateMap = function(url,width,height,options) { return new JQueryMobile_Map(url, width, height, options); };
+    
+    // NOTE: Purposely not using JQueryMobile_Websock, so existing overrides will work
+    this.CreateWebSocket = function( id,ip,port,options ) { return new _WebSock( id,ip,port,options ); }
+    JQueryMobile_Websock = _WebSock;
 
 	this.AddLayout = function( layout ) { 
 		getPageContent().append(layout);
@@ -130,9 +150,6 @@ function JQueryMoble()
 		}, duration);
 	};
     
-    this.ListFolder = function(path, filter, limit, options) {
-        options = options ? options.toLowerCase() : "";
-        
 //        if(path[0] != '/') { path = _prefix+path; }
 //         var results=[];
 //         for(var xa=0; xa<localStorage.length; xa++) {
@@ -140,18 +157,26 @@ function JQueryMoble()
 //             if(filter && key.lastIndexOf(filter) !== key.length-filter.length) { continue; }
 //             if(key.indexOf(path+"/") == 0) { results.push(key); }
 //         }
+        //var id="FILE:"+path;
+        //var file=_fetchFileSync(path);
+        //var file=_retrieveFile(path);
+        //console.log("file="+file+";type="+file.type);
+//        if(file.type !== "inode/directory") { return ""; }
+//        var data=JSON.parse(_blobToString(file));
+//        console.log('ListFolder('+path+')='+JSON.stringify(data));
+    this.ListFolder = function(path, filter, limit, options) {
+        //console.log("ListFolder "+path);
+        if(path == "/") { return ["/sdcard"]; }
+        
+        options = options ? options.toLowerCase() : "";
         while(path.length>1 && path[path.length-1] == '/') { path=path.substr(0,path.length-1); } // Trim trailing slashes
-        var id="FILE:"+path;
-        var file=_retrieveFile(path);
-        console.log("file="+file+";type="+file.type);
-        if(file.type !== "inode/directory") { return ""; }
-        var data=JSON.parse(_blobToString(file));
-        console.log('ListFolder('+path+')='+JSON.stringify(data));
-        return data;
+        var ret=_retrieveFolder(path);
+        if(!ret) { return []; }
+        return JSON.parse(ret);
     };
-
+    
     this.MakeFolder = function(path) {
-        console.log("path="+path);
+        console.log("MakeFolder "+path);
         if(this.FolderExists(path)) { return; }
         var prev=path.split('/').slice(0,-1).join('/');
         if(prev !== '') { this.MakeFolder(prev); } // Make parent folder(s)
@@ -159,13 +184,21 @@ function JQueryMoble()
     };
 
     this.FolderExists = function(path) {
-        return (_retrieveFile(path) !== null);
+        return _retrieveFolder(path) != null;
     };
 
     this.FileExists = function(path) {
-        return (_retrieveFile(path) !== null);
+        var dir=path.match(/.*\//)[0].replace(/\/$/,'');
+        var list=this.ListFolder(dir);
+        var base=path.replace(/.*\//,"");
+        console.log(list,base);
+        var isFound = list.find( (el) => { return el === base; }) != null;
+        if(!isFound) { return false; }
+        // Something is here, but is it a file or a folder?
+        console.log("isFound=true");
+        return !this.FolderExists(path); // Make sure it is not a folder
     };
-
+    
     this.GetPrivateFolder = function(name) { // NOTE: Creates the folder when called
         // e.g. /data/user/0/com/smartphoneremote.androidscriptfree/app_test
         var uid=0; // FIXME: Need different uid for each website visitor (use cookie/login)
@@ -212,12 +245,33 @@ function JQueryMoble()
         }
     };
     
-    this.LoadNumber = function( valueName, dft, shareId ) {
+    this.ReadFile = function(path) { return _load_binary_resource(path); } //_fetchFileSync(path); };
+
+    this.LoadText = function( valueName, dft, shareId ) {
+        if(!dft) { dft=""; }
         var id='VAL'+valueName+(shareId ? (":"+shareId) : "");
         var ref=localStorage[id];
         if(!ref) { return dft; }
         ref=JSON.parse(ref);
-        if(ref.type == 'number') { return ref.val; }
+        return (ref.type == 'text') ? ref.val: "";
+    }
+
+    this.LoadBoolean = function( valueName, dft, shareId ) {
+        if(!dft) { dft=false; }
+        var id='VAL'+valueName+(shareId ? (":"+shareId) : "");
+        var ref=localStorage[id];
+        if(!ref) { return dft; }
+        ref=JSON.parse(ref);
+        return (ref.type == 'boolean') ? ref.val: false;
+    }
+
+    this.LoadNumber = function( valueName, dft, shareId ) {
+        if(!dft) { dft=0; }
+        var id='VAL'+valueName+(shareId ? (":"+shareId) : "");
+        var ref=localStorage[id];
+        if(!ref) { return dft; }
+        ref=JSON.parse(ref);
+        return (ref.type == 'number') ? ref.val: 0;
     };
     
     this.SaveNumber = function( valueName, val, shareId ) {
@@ -303,8 +357,59 @@ function JQueryMobile_Lay(type, options)
 		if(child.init)
 			child.init();
 	};
+    
+    lay.ChildToFront = function() {
+        lay.css( {"z-index": _front_child_index++} );
+    };
+    
+    lay.detach = function() { console.log("FIXME: JQueryMobile_Lay.detach is not implemented"); };
 
 	return lay;
+}
+
+function JQueryMobile_Loc(type, options) {
+    this._errorCount=0;
+    function locError(error) {
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                console.log("JQueryMobile_Loc: User denied the request for Geolocation.");
+                break;
+            case error.POSITION_UNAVAILABLE:
+                console.log("JQueryMobile_Loc: Location information is unavailable.");
+                break;
+            case error.TIMEOUT:
+                console.log("JQueryMobile_Loc: The request to get user location timed out.");
+                break;
+            case error.UNKNOWN_ERROR:
+                console.log("JQueryMobile_Loc: An unknown error occurred.");
+                break;
+        }
+        if(++this._errorCount >= 10) {
+            this.Stop(); // Turn off if error count is excessive
+        }
+    } 
+
+    this._rate=1;
+    this._timerId=null;
+    this._callback=function() {};
+    
+    this.SetOnChange = function( callback ) { this._callback=callback; } 
+    this.Start = function() {
+        this._timerId=setInterval(function() {
+            if(navigator.geolocation) { 
+                navigator.geolocation.getCurrentPosition(this._callback, locError.bind(this)); }
+        }.bind(this), this._rate*1000);
+    }
+    this.Stop = function() {
+        if(this._timerId) { clearInterval(this._timerId); this._timerId=null; }
+    }
+    this.SetRate = function( rate ) {
+        var o=this._rate;
+        this._rate=rate;
+        if(o != rate && this._timerId) { this.Stop(); this.Start(); } // Restart if already running at a different rate
+    } 
+    this.GetDistanceTo = function( lat,lng ) { return parseFloat(this.impl.GetDistanceTo(lat, lng)); }
+    this.GetBearingTo = function( lat,lng ) { return parseFloat(this.impl.GetBearingTo(lat, lng)); }
 }
 
 function JQueryMobile_Dwn() {
@@ -382,9 +487,17 @@ function JQueryMobile_Scr(width, height, options)
 function JQueryMobile_Img(file, width, height, options, w, h)
 {
 	var w = width, h = height;
-	var img = $("<img id='img' src=\"" + file + "\">");
+    var _textStyle="";
+    var _textSize="10pt";
+    var _textFont="sans-serif";
+	var img = $("<canvas id='img'>Your browser does not support Canvas</canvas>");
 	_initObj(img);
 	_setSize(img, width, height, options);
+    img._paintColor="black"; // default
+    var initImg=new Image();
+    initImg.src=file;
+    var ctx = img[0].getContext("2d");
+    initImg.onload = function() { ctx.drawImage(initImg, 0, 0); }
 
 	options = options ? options.toLowerCase() : "";
 
@@ -394,7 +507,10 @@ function JQueryMobile_Img(file, width, height, options, w, h)
     img.SetName = function( name ) { console.log("SetName not implemented"); }
     img.GetName = function() { console.log("GetName not implemented"); return ""; }
     img.SetImage = function( image,width,height,options ) {
-    	img.attr("src", image);
+        var newImg=new Image();
+        newImg.src=image;
+        newImg.onload = function() { ctx.drawImage(newImage, 0, 0); }
+    	//img.attr("src", image);
     	_setSize(img, width?width:w, height?height:h, options);
 	}
 	img.GetImage = function() { return img.attr("src"); }
@@ -429,27 +545,32 @@ function JQueryMobile_Img(file, width, height, options, w, h)
 	// 	else this.Draw( "m", (image?image.id:null), matrix ); }
  //    obj.DrawPoint = function( x,y ) { 
 	// 	if( obj._auto ) this.impl.DrawPoint(x, y); else this.Draw( "p", null, x,y ); }
- //    obj.DrawCircle = function( x,y,radius ) { 
-	// 	if( obj._auto ) this.impl.DrawCircle(x, y, radius);
-	// 	else this.Draw( "e", null, x,y,radius ); }
+    img.DrawCircle = function( x,y,radius ) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 360);
+        ctx.stroke();
+    }
  //    obj.DrawArc = function( x1,y1,x2,y2,start,sweep ) { 
 	// 	if( obj._auto ) this.impl.DrawArc(x1, y1, x2, y2, start, sweep);
 	// 	else this.Draw( "a", null, x1,y1,x2,y2,start,sweep ); }
- //    obj.DrawLine = function( x1,y1,x2,y2 ) { 
-	// 	if( obj._auto ) this.impl.DrawLine(x1, y1, x2, y2); 
-	// 	else this.Draw( "l", null, x1,y1,x2,y2 ); }
+    img.DrawLine = function( x1,y1,x2,y2 ) { 
+        ctx.beginPath();
+        ctx.moveTo(x1,y1);
+        ctx.lineTo(x2,y2);
+        ctx.stroke();
+    }
  //    obj.DrawRectangle = function( x1,y1,x2,y2 ) { 
 	// 	if( obj._auto ) this.impl.DrawRect(x1, y1, x2, y2);
-	// 	else this.Draw( "r", null, x1,y1,x2,y2 ); }
- //    obj.DrawText = function( txt,x,y ) { 
-	// 	if( obj._auto ) this.impl.DrawText(txt, x, y); 
-	// 	else this.Draw( "t", txt, x, y, 0,0,0 ); }
-	// obj.SetAlpha = function( alpha ) { if( obj._auto ) this.impl.SetAlpha(alpha); else this.Draw( "k",null,alpha ); }
- //    obj.SetColor = function( clr ) { if( obj._auto ) this.impl.SetColor(clr); else this.Draw( "o", clr ); }
- //    obj.SetTextSize = function( size ) { if( obj._auto ) this.impl.SetTextSize(size); else this.Draw( "x",null,size ); }
+	// 	else this.Draw( "r", null, x1,y1,x2,y2 ); 
+        
+    //}
+    img.DrawText = function( txt,x,y ) { ctx.fillText(txt, x, y); }
+    img.SetAlpha = function( alpha ) { img.css("opacity", alpha ); }
+    img.SetColor = function( clr ) { img.css("color", clr); }
+    img.SetTextSize = function( size ) { _textSize=size; ctx.font=_textStyle+" "+_textSize+" "+_textFont; }
  //    obj.SetFontFile = function( file ) { if( obj._auto ) this.impl.SetFontFile(file); else this.Draw( "f",file ); }  
- //    obj.SetLineWidth = function( width ) { if( obj._auto ) this.impl.SetLineWidth(width); else this.Draw( "w",null,width ); }
- //    obj.SetPaintColor = function( clr ) { if( obj._auto ) this.impl.SetPaintColor(clr); else this.Draw( "n",clr ); }
+    img.SetLineWidth = function( width ) { ctx.lineWidth=width;  }
+    img.SetPaintColor = function( clr ) { _paintColor=clr; }
  //    obj.SetPaintStyle = function( style ) { if( obj._auto ) this.impl.SetPaintStyle(style); else this.Draw( "s",style ); } 
  //    obj.Rotate = function( angle,pivX,pivY ) { this.impl.Rotate(angle, pivX, pivY); }
  //    obj.Move = function( x,y ) { this.impl.Move(x, y); }
@@ -625,7 +746,7 @@ function JQueryMobile_Txe(text, width, height, options)
     txe.GetText = function() { return txeInput.val(); }
     txe.GetHtml = function() { console.log("GetHtml not implemented"); return txe.val(); } 
     txe.SetHint = function( text ) { txeInput.attr("placeholder", text); } 
-    txe.SetTextColor = function( color ) { text.css("color", color); } 
+    txe.SetTextColor = function( color ) { txe.css("color", color); } 
     txe.GetLineCount = function() { console.log("GetLineCount not implemented"); return 0; }   
     txe.GetMaxLines = function() { console.log("GetMaxLines not implemented"); return 0; }   
     txe.GetLineTop = function( line ) { console.log("GetLineTop not implemented"); return 0; }   
@@ -868,7 +989,9 @@ function JQueryMobile_Lst(list, width, height, options)
     lst.AddItem = function( title,body,image ) { console.log("AddItem not implemented"); }
     lst.InsertItem = function( index,title,body,image ) { console.log("InsertItem not implemented"); }
     lst.SetItem = function( title,newTitle,newBody,newImage ) { console.log("SetItem not implemented"); }
-    lst.SetItemByIndex = function( index,newTitle,newBody,newImage ) { console.log("SetItemByIndex not implemented"); }
+    lst.SetItemByIndex = function( index,newTitle,newBody,newImage ) { 
+        console.log("SetItemByIndex not implemented"); 
+    }
     lst.RemoveItem = function( title ) { console.log("RemoveItem not implemented"); }
     lst.RemoveItemByIndex = function( index ) { console.log("RemoveItemByIndex not implemented"); }
     lst.RemoveAll = function() { console.log("RemoveAll not implemented"); }
@@ -897,6 +1020,7 @@ function JQueryMobile_Lst(list, width, height, options)
     lst.SetDivider = function( height,clr ) { lst.children().children().css( "border-color", clr ); }
     lst.SetFontFile = function( file ) { console.log("SetFontFile not implemented"); }  
 	lst.SetIconSize = function( size,mode ) { lst.find("i").css( "font-size", size+(mode?mode:"") ); } 
+	lst.SetColumnWidths = function( w1,w2,w3 ) { console.log("SetColumnWidths not implemented"); }
 
 	return lst;
 }
@@ -1147,6 +1271,34 @@ function JQueryMobile_Dlg(title, options)
 	}
 
 	return dlg;
+}
+
+function JQueryMobile_LstDlg(title, list, options)
+{
+	var dlg = $("<div data-role=\"popup\" data-overlay-theme=\"a\" data-theme=\"a\" data-dismissible=\"false\">");
+	dlg.append("<div data-role=\"header\" data-theme=\"a\" role=\"banner\" class=\"ui-header ui-bar-a\"><h1 class=\"ui-title no-margin\" role=\"heading\" aria-level=\"1\">" + title + "</h1>");
+
+	var dlgContent = $("<div role=\"main\" class=\"ui-content no-padding\">");
+	dlg.append(dlgContent);
+
+	var lstLay = new JQueryMobile_Lay("Horizontal");
+
+    var width=0.8, height=0.8;
+	var lst = new JQueryMobile_Lst(list, width, height, options); 
+	lstLay.AddChild(lst);
+
+	dlgContent.append(lstLay);
+
+	_initSObj(dlg);
+
+	dlg.css("min-width", "250px");
+
+    dlg.SetOnTouch = function( callback ) { dlg.callback = callback }
+	dlg.SetTextColor = function( clr ) { dlg.css("color", clr); } //console.log("SetTextColor not implemented"); } 
+	dlg.SetBackColor = function( clr ) { dlg.css("background", clr); } //console.log("SetBackColor not implemented"); } 
+	dlg.SetSize = function( width,height,options ) { console.log("SetSize not implemented"); }
+    
+    return dlg;
 }
 
 function JQueryMobile_Ynd( msg )
@@ -1409,6 +1561,31 @@ function JQueryMobile_Map(key, width, height, options)
 	return map;
 }
 
+function JQueryMobile_Service(packageName, className, options, callback)
+{
+    this.packageName=packageName;
+    this.className=className;
+    this.onMessage=function() { };
+    if(!callback) { this.onMessage=options; this.options=""; }
+    else { this.options=options; this.onMessage=callback; }
+	this.SetOnMessage = function(callback) { this.onMessage=callback; }
+	this.SendMsg = function(obj, msg) {
+        client.send(JSON.stringify({"type":"cmd", "cmd":"SendService", "id":obj.id, "msg":msg}));
+    };
+	this.Stop = function(obj) {
+        client.send(JSON.stringify({"type":"cmd", "cmd":"StopService", "id":obj.id}));
+    };
+    this.Send = function(obj,cmd, parms) { 
+        client.send(JSON.stringify({"type":"cmd", "cmd":"SendService", "id":obj.id, "cmd2":cmd, "parms":parms}));
+	};
+	this.SendImg = function(obj,cmd,img ) { 
+        client.send(JSON.stringify({"type":"cmd", "cmd":"SendService", "id":obj.id, "cmd2":cmd, "img":img}));
+    };
+    this.Start = function(obj) {    
+        client.send(JSON.stringify({"type":"cmd", "cmd":"StartService", "id":obj.id, "packageName":this.packageName, "className":this.className, "options":this.options}));
+    }
+}
+
 function _initObj(element)
 {
 	element.Destroy = function() { this.remove(); } 
@@ -1418,6 +1595,7 @@ function _initObj(element)
     element.SetPadding = function( left,top,right,bottom ) { this.css("padding", _toPixelHeight(top) + " " + _toPixelWidth(right) + " " + _toPixelHeight(bottom) + " " + _toPixelWidth(left)); }
     element.SetMargins = function( left,top,right,bottom ) { this.css("margin", _toPixelHeight(top) + " " + _toPixelWidth(right) + " " + _toPixelHeight(bottom) + " " + _toPixelWidth(left)); }
     element.SetBackground = function( file,options ) { 
+        if(!options) options="";
 		this.css("background-image", "url("+file+")"); 
 		if(options.indexOf("repeat")==-1) this.css("background-size", "100% 100%" ); 
 		else this.css("background-repeat","repeat"); 
@@ -1589,7 +1767,11 @@ function _initWebSock() {
                     console.log("SERVER ERROR: "+msg.err); 
                     client.send(JSON.stringify({"type":"sync"})); // Continue sync from server
                 }
+console.log("Sync Done.  init?");
                 if(!_started) { _initApp(); }
+            }
+            if(msg.type == "service") {
+                console.log("SERVICE "+msg.service);
             }
         }
         else {
@@ -1601,11 +1783,17 @@ function _initWebSock() {
 
 function _initApp() {
     _started=true; 
+console.log('_initApp#1: type:'+(typeof OnStart));
     if(typeof OnStart === 'function') { 
+console.log('_initApp#2');
         _loadProgress(98);
+        //OnStart=syncify.revert(OnStart);
+        //OnStart( (ret) => { throw ret; } ); //console.log("OnStart="+ret); } );
         OnStart();
         _loadProgress(99);
+console.log('_initApp#3');
     }
+console.log('_initApp#4');
 }
 
 function _Sync(msg) { // Sync with null msg when client file changes (write/metadata)
@@ -1613,13 +1801,25 @@ function _Sync(msg) { // Sync with null msg when client file changes (write/meta
     var ref=_retrieveFile(msg.path);
     if(msg && (!ref || ref.lastModified < msg.lastModified || !ref.data)) { // FIXME: Check for EITHER localStorage data OR Chrome api
         //console.log("_Sync:!ref:"+(!ref)+";<:"+(ref.lastModified < msg.lastModified)+";ref.data:"+(!ref.data));
-        var uri= "/app/:*"+msg.path; //msg.path.replace(base,"/app/:*"+base);
-        _fetchBlob(uri, (data, blob) => { _storeFile(msg, data, blob); });
+        if(!msg.data) {
+            //var uri= "/app/:*"+msg.path; //msg.path.replace(base,"/app/:*"+base);
+            //_fetchBlob(uri, (data, blob) => { _storeFile(msg, data, blob); });
+            //_fetchBlob(msg.path, (data, blob) => { _storeFile(msg, data, blob); });
+            var blob=new Blob([],{type:msg.type});
+            _storeFile(msg, null, blob); 
+            _fetchBlobOnly(msg.path, (blob) => { _storeFile(msg, null, blob); });
+        }
+        else {
+            //console.log("msg.path="+msg.path+";msg.data="+msg.data+"***");
+            var blob=new Blob([msg.data],{type:'inode/directory'});
+            var data=_blobToDataURL(blob);
+            _storeFile(msg, data, blob);
+        }
     }
     client.send(JSON.stringify({"type":"sync"})); // Continue sync from server
 }
 
-function _storeFile(obj, data, blob) { // Input 'data' must be as a data URI
+function _storeFile(obj, data, blob) { // Input 'data' must be as a data URI or null if not storing data (e.g. for files to get from browser cache)
     // FIXME: Set EITHER localStorage or Chrome data, not both
     var id='FILE:'+obj.path;
     // NOTE: Possibly need to update parent directory (if this was a newly created file)
@@ -1630,6 +1830,7 @@ function _storeFile(obj, data, blob) { // Input 'data' must be as a data URI
     if(ppath !== '') {
         var file=_retrieveFile(ppath);
         if(file && file.type === "inode/directory") {
+            //console.log("id="+id+";parent str="+_blobToString(file));
             var filenames=JSON.parse(_blobToString(file));
             if(!filenames.find( (el) => { return el === final; })) { // If directory doesn't have this file yet
                 filenames.push(final);
@@ -1640,7 +1841,9 @@ function _storeFile(obj, data, blob) { // Input 'data' must be as a data URI
         else if(!file) { _createDirWithFilenames(ppath, []); } // Create missing parent(s)
         else { console.error("ERROR: Parent of '"+obj.path+"' is type '"+file.type+"'"); }
     }
-console.log("STORING "+id);
+//console.log("STORING "+id);
+    if(obj.path.indexOf('sample3.js') > -1) console.log("STORING "+id);
+
     try { localStorage[id] = JSON.stringify({path:obj.path, lastModified:obj.lastModified, type:obj.ctype, length:blob.length, data:data}); }
     catch(e) { alert('Local Storage error: '+e.message); }
     var file = _blobToFile(blob, obj.path, obj.lastModified);
@@ -1656,20 +1859,56 @@ function _createDirWithFilenames(path, filenames) { // Input array of filenames
     _storeFile(msg, data, blob);
 }
 
+var _fetchFileSync = syncify( (path, done) => {
+    var xhr = new XMLHttpRequest(); 
+    xhr.open("GET", path); 
+    xhr.responseType = "blob"; // force the HTTP response, response-type header to be blob
+    xhr.onload = () => {
+        var blob=xhr.response;
+        var heads=xhr.getAllResponseHeaders().split('\r\n'); //.toLowerCase();
+        var headers={};
+        for(var xa=0; xa<heads.length; xa++) {
+            var head=heads[xa].split(': ');
+            if(head == "") { continue; }
+            headers[head[0].toLowerCase()] = head[1];
+        }
+        var lastModified=new Date(headers['date']).getTime();
+        var file=_blobToFile(blob, path, lastModified);
+        done(blob);
+    }
+    xhr.send()
+});
+
+function _retrieveFolder(path)  {
+    var req = new XMLHttpRequest();
+    req.open('GET', path, false);
+    req.send(null);
+    if (req.status != 200) return null;
+    var ctype=req.getResponseHeader('content-type');
+    if(ctype != 'inode/directory') { return null; }
+    return req.responseText;
+}
+
 function _retrieveFile(path) {
     var id='FILE:'+path;
     var ref=_files[id];
     if(ref) { return ref; }
-    
+        
     ref=localStorage[id];
-    if(!ref) { return null; }
+    if(!ref) { 
+        if(path.indexOf('sample3.js') > -1) console.log("FILE "+path+" not found.");
+        return null; }
+    if(path.indexOf('sample3.js') > -1) { console.log("_retrieveFile: "+path); }
+    
     try {
         var obj=JSON.parse(ref);
-        var blob=_dataURItoBlob(obj.data)
+        var blob=obj.data ? _dataURItoBlob(obj.data) : new Blob([],{type:obj.type});
         var file=_blobToFile(blob, path, obj.lastModified);
         file.data=obj.data;
         _files[id]=file;
-        return file;
+        return file;    // NOTE: File contents cannot be taken from this unless it is type: inode/directory
+                        // NOTE: Regular files are too large to store as a dataURI in localStorage.  Instead,
+                        // NOTE: we must
     }
     catch(e) {
         console.log("ERROR: "+e.stack+"\nref="+ref);
@@ -1704,6 +1943,17 @@ function _fetchBlob(uri, done) { // Returns a blob as a data url (as well as ori
     xhr.send()
 }
 
+function _fetchBlobOnly(uri, done) { // Returns a blob asynchronously
+    var xhr = new XMLHttpRequest(); 
+    xhr.open("GET", uri); 
+    xhr.responseType = "blob"; // force the HTTP response, response-type header to be blob
+    xhr.onload = () => {
+        var blob = xhr.response;
+        done(blob);
+    }
+    xhr.send()
+}
+
 function _dataURItoBlob(dataURI) {
     // convert base64/URLEncoded data component to raw binary data held in a string
     var byteString;
@@ -1712,6 +1962,7 @@ function _dataURItoBlob(dataURI) {
     else
         byteString = unescape(dataURI.split(',')[1]);
 
+    //console.log("dataURI="+dataURI+"***");
     // separate out the mime component
     var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
@@ -1761,7 +2012,27 @@ function _load_binary_resource(url) {
   req.overrideMimeType('text\/plain; charset=x-user-defined');
   req.send(null);
   if (req.status != 200) return '';
+  //window.req=req;
+  //var b=new Blob; // Convert data to blob?
   return req.responseText; // NOTE: Use return: var abyte = _load_binary_resource(url).charCodeAt(x) & 0xff; // throw away high-order byte (f7)
+}
+
+function _save_binary_resource(url, data) {
+    var xhr = new XMLHttpRequest();
+  //req.open('PUT', url, false);
+  //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
+  //req.overrideMimeType('text\/plain; charset=x-user-defined');
+  //req.send(null);
+    xhr.open('PUT', url);
+    xhr.responseType = "blob"; // force the HTTP response, response-type header to be blob
+    xhr.onload = () => {
+        if (xhr.status != 204) {
+            console.error("status="+xhr.status+"; retry later");
+        }
+    }
+    var blob=new Blob([data], {type: 'text/plain; charset=x-user-defined'});
+    xhr.send(blob);
+    return true;
 }
 
 // For short input, Decode base64 back to Uint8Array
@@ -1804,7 +2075,7 @@ function _init(isDs) {
     _w = $(window).width();
     
     if(isDs) { _initWebSock(); }
-    else { _initApp(); }
+    // Started in app-init.js // else { _initApp(); }
 //     if(dirTree && dirTree != '') {
 //         alert('dirTree='+dirTree);
 //         dirTree=JSON.parse(dirTree);
@@ -1812,6 +2083,69 @@ function _init(isDs) {
     
 //    if(typeof OnStart === 'function') { OnStart(); }
 }
+
+////////////////////////////////
+// Modified _WebSock by Charles Wilt from 11/2/16 post to DroidScript Google Group
+////////////////////////////////
+function _WebSock( id, ip, port, options )
+{
+   var m_OnMessage = null;
+   var m_sock = null;
+   var m_timer = null;
+   
+   var m_OnOpen = null;
+   var m_OnClose = null;
+   var m_IsOpen = null;
+
+   
+    console.log( "Opening web socket:" + id );
+   if( !port ) port = 8080;
+  m_sock = new WebSocket( "ws://"+ip+":"+port );
+  m_sock.onopen = OnOpen;
+ m_sock.onmessage = OnMessage;
+   m_sock.onclose = OnClose;
+       m_sock.onerror = OnError;
+       m_timer = setInterval( CheckSocket, 7000 );
+   
+    function OnOpen() {
+        console.log( "Socket Open: "+id );
+       if (m_OnOpen) m_OnOpen(id);
+       m_IsOpen=true;
+   }
+   
+   function CheckSocket() {  
+       if( m_sock.readyState != 1 ) {
+           console.log( "Re-opening web socket:" + id );
+           m_sock = new WebSocket( "ws://"+ip+":"+port );
+       }
+   }
+   
+   function OnClose() {
+        console.log( "Socket Closed: "+id );
+        if (m_OnClose) m_OnClose(id);
+       m_IsOpen=false;
+   }
+   
+   function OnError(e) { console.log( "Socket Error: "+e.data ); }
+   function OnMessage( msg ) { if( m_OnMessage ) m_OnMessage( msg.data ); }
+   
+   
+ this.Close = function() { m_sock.close(); }
+   this.GetSocket = function() { return m_sock; }
+   this.SetOnMessage = function( callback ) { m_OnMessage = callback; }
+   
+   this.SetOnOpen = function( callback ) { m_OnOpen = callback; }
+   this.SetOnClose = function( callback ) { m_OnClose = callback; }
+   this.IsOpen = function(){return m_IsOpen;}
+   
+   this.Send = function( msg ) {
+       if( m_sock.readyState != 1 ) console.log( "Socket not ready:"+m_sock );
+        else m_sock.send( msg );
+   }
+   return this;
+}
+////////////////////////////////
+
 
 /*
 

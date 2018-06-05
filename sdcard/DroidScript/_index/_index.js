@@ -26,8 +26,12 @@ function OnConfig() {
 	layVert.AddChild( txt );
 	
     var list=app.ListFolder(folder);
+    //alert('list='+JSON.stringify(list));
+    console.log("list1="+list);
     list=list.filter(function(item){
-        return app.FileExists(folder+'/'+item+'/'+item+'.js');
+        var ret=app.FileExists(folder+'/'+item+'/'+item+'.js');
+        console.log('FileExists('+folder+'/'+item+'/'+item+'.js='+ret);
+        return ret;
     }).map(function(item){        
         var icon='../'+item+'/Img/'+item+'.png';
         if(!app.FileExists(icon)) { icon='Img/Pillar.png'; }
@@ -36,6 +40,7 @@ function OnConfig() {
 
     lst = app.CreateList( "", 0.8, -1 , "WhiteGrad,Expand,Menu");
 	lst.SetTextColor2("#FF0000AA");
+    console.log("SetList:"+list);
 	lst.SetList(list);
     lst.SetTextColor( "#ff666666" );
     lst.SetBackColor( "#ffffffff" );
@@ -52,7 +57,8 @@ function OnConfig() {
 }
 
 function RunApp( title, body, type, index ) {
-    var appName=folder+'/'+title+'/'+title+'.js';
+    var appTitle=body ? body : title;
+    var appName=folder+'/'+appTitle+'/'+appTitle+'.js';
     var data ={action:"android.intent.action.VIEW"}
     var intent= JSON.stringify(data)
     app.StartApp(appName,"",intent );

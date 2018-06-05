@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Browser-based DroidScript implementation
+<!-- A Browser-based DroidScript implementation
  * Copyright 2017 droidscript.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 -->
-<!-- NOTE: This file can be copied as index.html or app.html to any DroidScript app folder to run the app serverless.
+<!-- NOTE: This file can be copied to any DroidScript app folder to run the app serverless.
     Folder layout:
         +droidscript-web/
         +MyApp/
           |MyApp.js
-          |index.html <= THIS FILE
+          |app.html <= THIS FILE
 -->
-<html>
+<html manifest=".appcache">
 <head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
 <meta name="viewport" content="width=device-width">
 
-<script type="text/javascript" src="https://rawgit.com/w3core/import.js/master/import.min.js"></script>
+<!-- script type="text/javascript" src="https://rawgit.com/w3core/import.js/master/import.min.js"></script -->
+<script type="text/javascript" src="../droidscript-web/import.min.js"></script>
 
 <script>
+    var appCache = window.applicationCache;
     _loadStarted=Date.now();
     
     function _loadProgress(num, prog) { // Report progress while loading
@@ -43,6 +47,23 @@
     function _onResize() {} // Temporary until finished loading, ignore resize
     
     (() => { // NOTE: Start of internal function scope
+        var deps1= ["../droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.css", // Use the JQueryMobile for our UI
+                    "../droidscript-web/jquery-mobile-font-awesome/css/jqm-font-awesome-usvg-upng.min.css",
+                    "../droidscript-web/font-awesome/css/font-awesome.min.css",
+                    "../droidscript-web/jquery-mobile-cards/card-css.css",
+                    "../droidscript-web/wrappers/jquery-mobile.css",
+
+                    // Custom styles
+                    "../droidscript-web/style.css",
+
+                    "../droidscript-web/jquery/jquery-1.12.1.min.js"];
+        var deps2= ["../droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.js",
+                    "http://aldonline.github.io/syncify/build/syncify-1.1.0.min.js"];
+        var deps3= ["../droidscript-web/wrappers/jquery-mobile.js"];
+        var deps4= ["../droidscript-web/wrappers/jquery-mobile-init.js",
+                    "../droidscript-web/app.js",
+                    "../droidscript-web/app-init.js"];
+
     
         var _appUrl = _fixUrl("../<%this.app%>/<%this.app%>.js");
         // NOTE: Below choose the likely fastest method to load dependencies, based on server
@@ -71,48 +92,26 @@
             request.send(null);
         }
         function _importParallel(isDs) { // Faster on a Desktop PC (sample3 loads avg 0.8354 sec vs. 0.985 sec)
-            $import("../droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.css", // Use the JQueryMobile for our UI
-                    "../droidscript-web/jquery-mobile-font-awesome/css/jqm-font-awesome-usvg-upng.min.css",
-                    "../droidscript-web/font-awesome/css/font-awesome.min.css",
-                    "../droidscript-web/jquery-mobile-cards/card-css.css",
-                    "../droidscript-web/wrappers/jquery-mobile.css",
-                    
-                    // Custom styles
-                    "../droidscript-web/style.css",
-                    
-                    "../droidscript-web/jquery/jquery-1.12.1.min.js", (files) => {
-                        _loadProgress(1, '40%');
-                        $import("../droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.js",
-                                "../droidscript-web/wrappers/jquery-mobile.js", (files) => { 
-                                    _loadProgress(2, '50%');
-                                    $import(_appUrl, (files) => { 
-                                                _loadProgress(3, '57%');
-                                                $import("../droidscript-web/wrappers/jquery-mobile-init.js",
-                                                        "../droidscript-web/app.js",(files) => {
-                                                            _loadProgress(4, '85%');
-                                                            _init(isDs);
-                                                        });
-                                            });
+            $import(deps1[0],deps1[1],deps1[2],deps1[3],deps1[4],deps1[5],deps1[6], (files) => {
+                    _loadProgress(1, '40%');
+                    $import(deps2[0],deps2[1], (files) => { 
+                            _loadProgress(2, '50%');
+                            $import(deps3[0],(files) => {
+                                    _loadProgress(3, '57%');
+                                    $import(deps4[0],deps4[1], (files) => {
+                                            _loadProgress(4, '67%');
+                                            $import(_appUrl, (files) => { 
+                                                _loadProgress(4, '85%');
+                                                _init(isDs);
+                                                });
+                                        });
                                 });
-                    });
+                        });
+                });
         }            
         function _importSerial(isDs) { // Faster on Raspberry Pi (sample3 loads avg. 3.9118 sec vs. 6.57 sec)
-            var arr=["../droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.css",
-                    "../droidscript-web/jquery-mobile-font-awesome/css/jqm-font-awesome-usvg-upng.min.css",
-                    "../droidscript-web/font-awesome/css/font-awesome.min.css",
-                    "../droidscript-web/jquery-mobile-cards/card-css.css",
-                    "../droidscript-web/wrappers/jquery-mobile.css",
-                    
-                    // Custom styles
-                    "../droidscript-web/style.css",
-                    
-                    "../droidscript-web/jquery/jquery-1.12.1.min.js",            
-                    "../droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.js",
-                    "../droidscript-web/wrappers/jquery-mobile.js",
-                    _appUrl,
-                    "../droidscript-web/wrappers/jquery-mobile-init.js",
-                    "../droidscript-web/app.js"];
-                    
+            //var arr=deps1.concat(deps2).concat([_appUrl]).concat(deps3);
+            var arr=deps1.concat(deps2).concat(deps3).concat(deps4).concat([_appUrl]);
             var olen=arr.length;
             function _imports() {
                 if(arr.length > 0) {
@@ -129,17 +128,90 @@
             _imports();
         }
 
+        function replaceAll(str, find, replace) {
+            if(str==null || find==null || replace==null) {
+                throw Error("replaceAll: null argument: str="+str+",find="+find+",replace="+replace);
+            }
+            return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
+        }
+
         function _fixUrl(appUrl) {
             // NOTE: Below performs replacement in case we're not running from our custom server
             if(appUrl == "../<"+"%"+"this.app%>/<"+"%"+"this.app%>.js") {
                 var p=document.location.pathname.replace("/index.html",'').replace("/app.html",'');
                 var xx=p.lastIndexOf('/');
                 var app=p.substr(xx+1);
-                appUrl=appUrl.replace(/<%this.app%>/g,app);
+                appUrl=replaceAll(appUrl, '<%this.app%>', app);
             }
             return appUrl;
         }
+        
+        function cacheStatus() {
+            switch (appCache.status) {
+                case appCache.UNCACHED: // UNCACHED == 0
+                    return 'UNCACHED';
+                    break;
+                case appCache.IDLE: // IDLE == 1
+                    return 'IDLE';
+                    break;
+                case appCache.CHECKING: // CHECKING == 2
+                    return 'CHECKING';
+                    break;
+                case appCache.DOWNLOADING: // DOWNLOADING == 3
+                    return 'DOWNLOADING';
+                    break;
+                case appCache.UPDATEREADY:  // UPDATEREADY == 4
+                    return 'UPDATEREADY';
+                    break;
+                case appCache.OBSOLETE: // OBSOLETE == 5
+                    return 'OBSOLETE';
+                    break;
+                default:
+                    return 'UKNOWN CACHE STATUS';
+                    break;
+            }
+        }
+        
+        function handleCacheEvent(e) {
+            if(e.type != 'progress') console.log('Cache: ',e,' STATUS=',cacheStatus());
+            if(e.type === 'progress') {
+            lastCacheEvent=e;
+                //console.log('e='+e+';loaded='+e.loaded+';total='+e.total);
+                var xa=e.loaded,olen=e.total;
+                if(xa && olen) {
+                    var pct=(xa*100/olen).toFixed(0);
+                    //console.log(pct+'% cached');
+                    _loadProgress(xa, pct+'% cached');
+                }
+                else { _loadProgress(0,'caching...'); }    
+            }
+            if (appCache.status == window.applicationCache.UPDATEREADY) {
+                appCache.swapCache();  // The fetch was successful, swap in the new cache.
+            }
+        }
 
+        function handleCacheError(e) { console.error('Error: Cache failed to update: '+e); }
+
+        //appCache.update(); // Attempt to update the user's cache.
+         appCache.addEventListener('cached', handleCacheEvent, false);       // Fired after the first cache of the manifest.
+         appCache.addEventListener('checking', handleCacheEvent, false);     // Checking for an update. Always the first event fired in the sequence.
+         appCache.addEventListener('downloading', handleCacheEvent, false);  // An update was found. The browser is fetching resources.
+         appCache.addEventListener('error', handleCacheError, false);        // Manifest returns 404 or 410, download failed, or manifest changed while the downloading.
+         appCache.addEventListener('noupdate', handleCacheEvent, false);     // Fired after the first download of the manifest.
+         appCache.addEventListener('obsolete', handleCacheEvent, false);     // Fired if the manifest file returns a 404 or 410 (results in the application cache being deleted)
+         appCache.addEventListener('progress', handleCacheEvent, false);     // Fired for each resource listed in the manifest as it is being fetched.
+         appCache.addEventListener('updateready', handleCacheEvent, false);  // Fired when the manifest resources have been newly redownloaded.
+        
+        // Check if a new cache is available on page load.
+        window.addEventListener('load', function(e) {
+            window.applicationCache.addEventListener('updateready', function(e) {
+                if (window.applicationCache.status == window.applicationCache.UPDATEREADY) { // Browser downloaded a new app cache.
+                    if (confirm('A new version of this site is available. Load it?')) { window.location.reload(); }
+                } else { /* Manifest didn't change. Nothing new to server. */ }
+            }, false);
+        }, false);        
+
+        // Determine whether we need a more detailed progress (slow connection)
         _fetchSimilarHeaders((heads) => { 
             var headAt=Date.now(); // 494 from pi, 53 from PC, 802 from PC with GPRS, 412 with Regular, 270 with Good 2G, 
             var delay=headAt-_loadStarted;
@@ -159,11 +231,11 @@
 
 <style>
 .loader {
-    border: 16px solid #f3f3f3; /* Light grey */
-    border-top: 16px solid #3498db; /* Blue */
+    border: 10px solid #f3f3f3; /* Light grey */
+    border-top: 10px solid #3498db; /* Blue */
     border-radius: 50%;
-    width: 80px;
-    height: 80px;
+    width: 50px;
+    height: 50px;
     display: inline-block;
     animation: spin 2s linear infinite;
 }
