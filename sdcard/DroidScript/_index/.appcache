@@ -1,33 +1,37 @@
 CACHE MANIFEST
 
 CACHE:
-# mod=1548808863426, dir=true, size=4096
+# mod=1548813360584, dir=true, size=4096
 /
 # mod=1547681517677, dir=true, size=4096
 /sdcard
-# mod=1547764668226, dir=true, size=4096
+# mod=1548810335259, dir=true, size=4096
 /sdcard/DroidScript
-# mod=1547764608312, dir=true, size=4096
+# mod=1548810304128, dir=true, size=4096
 /sdcard/DroidScript/_index
-# mod=1545098915498, dir=true, size=4096
-/sdcard/DroidScript/droidscript-web
 # mod=1547764608312, dir=true, size=4096
+/sdcard/DroidScript/_index.test
+# mod=1548810843991, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web
+# mod=1548810153642, dir=true, size=4096
 /sdcard/DroidScript/_index/Img
-# mod=1547764608311, dir=false, size=1928
+# mod=1548810153641, dir=false, size=1928
 /sdcard/DroidScript/_index/_index.js
+# mod=1547764608312, dir=true, size=4096
+/sdcard/DroidScript/_index.test/Img
+# mod=1547764608311, dir=false, size=1928
+/sdcard/DroidScript/_index.test/_index.js
 # mod=1545098915440, dir=false, size=57
 /sdcard/DroidScript/droidscript-web/app-init.js
 # mod=1545098915498, dir=false, size=109576
 /sdcard/DroidScript/droidscript-web/app.js
-# mod=1545098915436, dir=false, size=109576
-/sdcard/DroidScript/droidscript-web/app.js.orig
 # mod=1545098915497, dir=true, size=12288
 /sdcard/DroidScript/droidscript-web/flags
 # mod=1545098915431, dir=true, size=4096
 /sdcard/DroidScript/droidscript-web/font-awesome
 # mod=1545098915446, dir=true, size=4096
 /sdcard/DroidScript/droidscript-web/fonts
-# mod=1545098915408, dir=true, size=4096
+# mod=1548810843991, dir=true, size=4096
 /sdcard/DroidScript/droidscript-web/html
 # mod=1545098915433, dir=false, size=3004
 /sdcard/DroidScript/droidscript-web/import.min.js
@@ -43,22 +47,22 @@ CACHE:
 /sdcard/DroidScript/droidscript-web/jquery-mobile-font-awesome
 # mod=1545098915498, dir=true, size=4096
 /sdcard/DroidScript/droidscript-web/polyfills
-# mod=1545098915428, dir=true, size=4096
+# mod=1548810843991, dir=true, size=4096
 /sdcard/DroidScript/droidscript-web/server
 # mod=1545098915451, dir=false, size=1403
 /sdcard/DroidScript/droidscript-web/style.css
-# mod=1545098915436, dir=false, size=1403
-/sdcard/DroidScript/droidscript-web/style.css.orig
 # mod=1545098915441, dir=true, size=4096
 /sdcard/DroidScript/droidscript-web/themes
 # mod=1545098915451, dir=false, size=1932
 /sdcard/DroidScript/droidscript-web/utils.js
 # mod=1545098915450, dir=true, size=4096
 /sdcard/DroidScript/droidscript-web/wSelect
-# mod=1547766900686, dir=true, size=4096
+# mod=1548810843991, dir=true, size=4096
 /sdcard/DroidScript/droidscript-web/wrappers
-# mod=1547764608312, dir=false, size=1529
+# mod=1548810153642, dir=false, size=1529
 /sdcard/DroidScript/_index/Img/Pillar.png
+# mod=1547764608312, dir=false, size=1529
+/sdcard/DroidScript/_index.test/Img/Pillar.png
 # mod=1545098915487, dir=false, size=643
 /sdcard/DroidScript/droidscript-web/flags/ad.png
 # mod=1545098915471, dir=false, size=408
@@ -563,8 +567,6 @@ CACHE:
 /sdcard/DroidScript/droidscript-web/html/404.html
 # mod=1545098915407, dir=false, size=13727
 /sdcard/DroidScript/droidscript-web/html/app.html
-# mod=1545098915408, dir=false, size=13703
-/sdcard/DroidScript/droidscript-web/html/app.html.orig
 # mod=1545098915408, dir=false, size=208
 /sdcard/DroidScript/droidscript-web/html/index.html
 # mod=1545098915406, dir=false, size=84
@@ -609,26 +611,18 @@ CACHE:
 /sdcard/DroidScript/droidscript-web/polyfills/1.4.3_ydn.db-is-core-qry.js
 # mod=1545098915498, dir=false, size=62797
 /sdcard/DroidScript/droidscript-web/polyfills/sockjs.min.js
-# mod=1545098915409, dir=false, size=0
-/sdcard/DroidScript/droidscript-web/server/_tmp_13583_4676f03b2232ac95ba324563c1d06b27
 # mod=1545098915428, dir=false, size=246
 /sdcard/DroidScript/droidscript-web/server/config.json
 # mod=1545098915410, dir=false, size=4374
 /sdcard/DroidScript/droidscript-web/server/dirlist.js
 # mod=1545098915409, dir=false, size=17351
 /sdcard/DroidScript/droidscript-web/server/droidscript_svc.js
-# mod=1545098915428, dir=false, size=16420
-/sdcard/DroidScript/droidscript-web/server/droidscript_svc.js.orig
 # mod=1545098915410, dir=false, size=36973
 /sdcard/DroidScript/droidscript-web/server/dserve.js
-# mod=1545098915428, dir=false, size=36864
-/sdcard/DroidScript/droidscript-web/server/dserve.js.orig
 # mod=1545098915428, dir=true, size=4096
 /sdcard/DroidScript/droidscript-web/server/node_modules
 # mod=1545098915409, dir=false, size=49
 /sdcard/DroidScript/droidscript-web/server/package.json
-# mod=1545098915410, dir=false, size=9479
-/sdcard/DroidScript/droidscript-web/server/pnpm-debug.log
 # mod=1545098915409, dir=false, size=3722
 /sdcard/DroidScript/droidscript-web/server/runservice.js
 # mod=1545098915428, dir=false, size=770
@@ -655,12 +649,8 @@ CACHE:
 /sdcard/DroidScript/droidscript-web/wrappers/jquery-mobile-init.js
 # mod=1545098915432, dir=false, size=3032
 /sdcard/DroidScript/droidscript-web/wrappers/jquery-mobile.css
-# mod=1545098915433, dir=false, size=3032
-/sdcard/DroidScript/droidscript-web/wrappers/jquery-mobile.css.orig
 # mod=1547766900686, dir=false, size=120180
 /sdcard/DroidScript/droidscript-web/wrappers/jquery-mobile.js
-# mod=1545098915432, dir=false, size=109826
-/sdcard/DroidScript/droidscript-web/wrappers/jquery-mobile.js.orig
 # mod=1545098915431, dir=false, size=33233
 /sdcard/DroidScript/droidscript-web/font-awesome/css/font-awesome.css
 # mod=1545098915431, dir=false, size=27466
