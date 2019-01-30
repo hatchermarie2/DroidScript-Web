@@ -1,5 +1,5 @@
 #!/bin/bash
-# Must be installed in e.g. /etc/rc.local
+# Must be installed in e.g. /etc/rc.local within Crouton
 
 SERVERS="Server1 Server2"
 
