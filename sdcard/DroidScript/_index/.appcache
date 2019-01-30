@@ -1,0 +1,746 @@
+CACHE MANIFEST
+
+CACHE:
+# mod=1548808863426, dir=true, size=4096
+/
+# mod=1547681517677, dir=true, size=4096
+/sdcard
+# mod=1547764668226, dir=true, size=4096
+/sdcard/DroidScript
+# mod=1547764608312, dir=true, size=4096
+/sdcard/DroidScript/_index
+# mod=1545098915498, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web
+# mod=1547764608312, dir=true, size=4096
+/sdcard/DroidScript/_index/Img
+# mod=1547764608311, dir=false, size=1928
+/sdcard/DroidScript/_index/_index.js
+# mod=1545098915440, dir=false, size=57
+/sdcard/DroidScript/droidscript-web/app-init.js
+# mod=1545098915498, dir=false, size=109576
+/sdcard/DroidScript/droidscript-web/app.js
+# mod=1545098915436, dir=false, size=109576
+/sdcard/DroidScript/droidscript-web/app.js.orig
+# mod=1545098915497, dir=true, size=12288
+/sdcard/DroidScript/droidscript-web/flags
+# mod=1545098915431, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/font-awesome
+# mod=1545098915446, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/fonts
+# mod=1545098915408, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/html
+# mod=1545098915433, dir=false, size=3004
+/sdcard/DroidScript/droidscript-web/import.min.js
+# mod=1545098915450, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/jquery
+# mod=1545098915439, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/jquery-mobile
+# mod=1545098915440, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/jquery-mobile-cards
+# mod=1545098915436, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker
+# mod=1545098915440, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/jquery-mobile-font-awesome
+# mod=1545098915498, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/polyfills
+# mod=1545098915428, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/server
+# mod=1545098915451, dir=false, size=1403
+/sdcard/DroidScript/droidscript-web/style.css
+# mod=1545098915436, dir=false, size=1403
+/sdcard/DroidScript/droidscript-web/style.css.orig
+# mod=1545098915441, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/themes
+# mod=1545098915451, dir=false, size=1932
+/sdcard/DroidScript/droidscript-web/utils.js
+# mod=1545098915450, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/wSelect
+# mod=1547766900686, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/wrappers
+# mod=1547764608312, dir=false, size=1529
+/sdcard/DroidScript/_index/Img/Pillar.png
+# mod=1545098915487, dir=false, size=643
+/sdcard/DroidScript/droidscript-web/flags/ad.png
+# mod=1545098915471, dir=false, size=408
+/sdcard/DroidScript/droidscript-web/flags/ae.png
+# mod=1545098915455, dir=false, size=604
+/sdcard/DroidScript/droidscript-web/flags/af.png
+# mod=1545098915493, dir=false, size=591
+/sdcard/DroidScript/droidscript-web/flags/ag.png
+# mod=1545098915470, dir=false, size=643
+/sdcard/DroidScript/droidscript-web/flags/ai.png
+# mod=1545098915493, dir=false, size=600
+/sdcard/DroidScript/droidscript-web/flags/al.png
+# mod=1545098915479, dir=false, size=497
+/sdcard/DroidScript/droidscript-web/flags/am.png
+# mod=1545098915491, dir=false, size=488
+/sdcard/DroidScript/droidscript-web/flags/an.png
+# mod=1545098915488, dir=false, size=428
+/sdcard/DroidScript/droidscript-web/flags/ao.png
+# mod=1545098915456, dir=false, size=506
+/sdcard/DroidScript/droidscript-web/flags/ar.png
+# mod=1545098915477, dir=false, size=647
+/sdcard/DroidScript/droidscript-web/flags/as.png
+# mod=1545098915486, dir=false, size=403
+/sdcard/DroidScript/droidscript-web/flags/at.png
+# mod=1545098915471, dir=false, size=673
+/sdcard/DroidScript/droidscript-web/flags/au.png
+# mod=1545098915478, dir=false, size=524
+/sdcard/DroidScript/droidscript-web/flags/aw.png
+# mod=1545098915487, dir=false, size=663
+/sdcard/DroidScript/droidscript-web/flags/ax.png
+# mod=1545098915485, dir=false, size=589
+/sdcard/DroidScript/droidscript-web/flags/az.png
+# mod=1545098915480, dir=false, size=593
+/sdcard/DroidScript/droidscript-web/flags/ba.png
+# mod=1545098915468, dir=false, size=585
+/sdcard/DroidScript/droidscript-web/flags/bb.png
+# mod=1545098915458, dir=false, size=504
+/sdcard/DroidScript/droidscript-web/flags/bd.png
+# mod=1545098915480, dir=false, size=449
+/sdcard/DroidScript/droidscript-web/flags/be.png
+# mod=1545098915491, dir=false, size=497
+/sdcard/DroidScript/droidscript-web/flags/bf.png
+# mod=1545098915460, dir=false, size=462
+/sdcard/DroidScript/droidscript-web/flags/bg.png
+# mod=1545098915492, dir=false, size=457
+/sdcard/DroidScript/droidscript-web/flags/bh.png
+# mod=1545098915478, dir=false, size=675
+/sdcard/DroidScript/droidscript-web/flags/bi.png
+# mod=1545098915495, dir=false, size=486
+/sdcard/DroidScript/droidscript-web/flags/bj.png
+# mod=1545098915481, dir=false, size=611
+/sdcard/DroidScript/droidscript-web/flags/bm.png
+# mod=1545098915485, dir=false, size=639
+/sdcard/DroidScript/droidscript-web/flags/bn.png
+# mod=1545098915489, dir=false, size=500
+/sdcard/DroidScript/droidscript-web/flags/bo.png
+# mod=1545098915483, dir=false, size=593
+/sdcard/DroidScript/droidscript-web/flags/br.png
+# mod=1545098915482, dir=false, size=526
+/sdcard/DroidScript/droidscript-web/flags/bs.png
+# mod=1545098915462, dir=false, size=631
+/sdcard/DroidScript/droidscript-web/flags/bt.png
+# mod=1545098915491, dir=false, size=512
+/sdcard/DroidScript/droidscript-web/flags/bv.png
+# mod=1545098915460, dir=false, size=443
+/sdcard/DroidScript/droidscript-web/flags/bw.png
+# mod=1545098915468, dir=false, size=514
+/sdcard/DroidScript/droidscript-web/flags/by.png
+# mod=1545098915479, dir=false, size=600
+/sdcard/DroidScript/droidscript-web/flags/bz.png
+# mod=1545098915491, dir=false, size=628
+/sdcard/DroidScript/droidscript-web/flags/ca.png
+# mod=1545098915472, dir=false, size=398
+/sdcard/DroidScript/droidscript-web/flags/catalonia.png
+# mod=1545098915464, dir=false, size=625
+/sdcard/DroidScript/droidscript-web/flags/cc.png
+# mod=1545098915469, dir=false, size=528
+/sdcard/DroidScript/droidscript-web/flags/cd.png
+# mod=1545098915453, dir=false, size=614
+/sdcard/DroidScript/droidscript-web/flags/cf.png
+# mod=1545098915469, dir=false, size=521
+/sdcard/DroidScript/droidscript-web/flags/cg.png
+# mod=1545098915468, dir=false, size=367
+/sdcard/DroidScript/droidscript-web/flags/ch.png
+# mod=1545098915496, dir=false, size=453
+/sdcard/DroidScript/droidscript-web/flags/ci.png
+# mod=1545098915494, dir=false, size=586
+/sdcard/DroidScript/droidscript-web/flags/ck.png
+# mod=1545098915487, dir=false, size=450
+/sdcard/DroidScript/droidscript-web/flags/cl.png
+# mod=1545098915470, dir=false, size=525
+/sdcard/DroidScript/droidscript-web/flags/cm.png
+# mod=1545098915476, dir=false, size=472
+/sdcard/DroidScript/droidscript-web/flags/cn.png
+# mod=1545098915464, dir=false, size=483
+/sdcard/DroidScript/droidscript-web/flags/co.png
+# mod=1545098915453, dir=false, size=477
+/sdcard/DroidScript/droidscript-web/flags/cr.png
+# mod=1545098915484, dir=false, size=439
+/sdcard/DroidScript/droidscript-web/flags/cs.png
+# mod=1545098915481, dir=false, size=563
+/sdcard/DroidScript/droidscript-web/flags/cu.png
+# mod=1545098915465, dir=false, size=529
+/sdcard/DroidScript/droidscript-web/flags/cv.png
+# mod=1545098915484, dir=false, size=608
+/sdcard/DroidScript/droidscript-web/flags/cx.png
+# mod=1545098915468, dir=false, size=428
+/sdcard/DroidScript/droidscript-web/flags/cy.png
+# mod=1545098915479, dir=false, size=476
+/sdcard/DroidScript/droidscript-web/flags/cz.png
+# mod=1545098915469, dir=false, size=545
+/sdcard/DroidScript/droidscript-web/flags/de.png
+# mod=1545098915461, dir=false, size=572
+/sdcard/DroidScript/droidscript-web/flags/dj.png
+# mod=1545098915463, dir=false, size=495
+/sdcard/DroidScript/droidscript-web/flags/dk.png
+# mod=1545098915482, dir=false, size=620
+/sdcard/DroidScript/droidscript-web/flags/dm.png
+# mod=1545098915484, dir=false, size=508
+/sdcard/DroidScript/droidscript-web/flags/do.png
+# mod=1545098915454, dir=false, size=582
+/sdcard/DroidScript/droidscript-web/flags/dz.png
+# mod=1545098915488, dir=false, size=500
+/sdcard/DroidScript/droidscript-web/flags/ec.png
+# mod=1545098915466, dir=false, size=429
+/sdcard/DroidScript/droidscript-web/flags/ee.png
+# mod=1545098915497, dir=false, size=465
+/sdcard/DroidScript/droidscript-web/flags/eg.png
+# mod=1545098915462, dir=false, size=508
+/sdcard/DroidScript/droidscript-web/flags/eh.png
+# mod=1545098915463, dir=false, size=496
+/sdcard/DroidScript/droidscript-web/flags/england.png
+# mod=1545098915483, dir=false, size=653
+/sdcard/DroidScript/droidscript-web/flags/er.png
+# mod=1545098915476, dir=false, size=469
+/sdcard/DroidScript/droidscript-web/flags/es.png
+# mod=1545098915476, dir=false, size=592
+/sdcard/DroidScript/droidscript-web/flags/et.png
+# mod=1545098915466, dir=false, size=479
+/sdcard/DroidScript/droidscript-web/flags/europeanunion.png
+# mod=1545098915464, dir=false, size=532
+/sdcard/DroidScript/droidscript-web/flags/fam.png
+# mod=1545098915495, dir=false, size=489
+/sdcard/DroidScript/droidscript-web/flags/fi.png
+# mod=1545098915480, dir=false, size=610
+/sdcard/DroidScript/droidscript-web/flags/fj.png
+# mod=1545098915489, dir=false, size=648
+/sdcard/DroidScript/droidscript-web/flags/fk.png
+# mod=1545098915476, dir=false, size=552
+/sdcard/DroidScript/droidscript-web/flags/fm.png
+# mod=1545098915466, dir=false, size=474
+/sdcard/DroidScript/droidscript-web/flags/fo.png
+# mod=1545098915463, dir=false, size=545
+/sdcard/DroidScript/droidscript-web/flags/fr.png
+# mod=1545098915486, dir=false, size=489
+/sdcard/DroidScript/droidscript-web/flags/ga.png
+# mod=1545098915461, dir=false, size=599
+/sdcard/DroidScript/droidscript-web/flags/gb.png
+# mod=1545098915457, dir=false, size=637
+/sdcard/DroidScript/droidscript-web/flags/gd.png
+# mod=1545098915466, dir=false, size=594
+/sdcard/DroidScript/droidscript-web/flags/ge.png
+# mod=1545098915460, dir=false, size=545
+/sdcard/DroidScript/droidscript-web/flags/gf.png
+# mod=1545098915465, dir=false, size=490
+/sdcard/DroidScript/droidscript-web/flags/gh.png
+# mod=1545098915462, dir=false, size=463
+/sdcard/DroidScript/droidscript-web/flags/gi.png
+# mod=1545098915454, dir=false, size=470
+/sdcard/DroidScript/droidscript-web/flags/gl.png
+# mod=1545098915455, dir=false, size=493
+/sdcard/DroidScript/droidscript-web/flags/gm.png
+# mod=1545098915479, dir=false, size=480
+/sdcard/DroidScript/droidscript-web/flags/gn.png
+# mod=1545098915496, dir=false, size=488
+/sdcard/DroidScript/droidscript-web/flags/gp.png
+# mod=1545098915495, dir=false, size=537
+/sdcard/DroidScript/droidscript-web/flags/gq.png
+# mod=1545098915456, dir=false, size=487
+/sdcard/DroidScript/droidscript-web/flags/gr.png
+# mod=1545098915467, dir=false, size=630
+/sdcard/DroidScript/droidscript-web/flags/gs.png
+# mod=1545098915470, dir=false, size=493
+/sdcard/DroidScript/droidscript-web/flags/gt.png
+# mod=1545098915488, dir=false, size=509
+/sdcard/DroidScript/droidscript-web/flags/gu.png
+# mod=1545098915456, dir=false, size=516
+/sdcard/DroidScript/droidscript-web/flags/gw.png
+# mod=1545098915462, dir=false, size=645
+/sdcard/DroidScript/droidscript-web/flags/gy.png
+# mod=1545098915470, dir=false, size=527
+/sdcard/DroidScript/droidscript-web/flags/hk.png
+# mod=1545098915454, dir=false, size=673
+/sdcard/DroidScript/droidscript-web/flags/hm.png
+# mod=1545098915466, dir=false, size=537
+/sdcard/DroidScript/droidscript-web/flags/hn.png
+# mod=1545098915485, dir=false, size=524
+/sdcard/DroidScript/droidscript-web/flags/hr.png
+# mod=1545098915484, dir=false, size=487
+/sdcard/DroidScript/droidscript-web/flags/ht.png
+# mod=1545098915497, dir=false, size=432
+/sdcard/DroidScript/droidscript-web/flags/hu.png
+# mod=1545098915475, dir=false, size=430
+/sdcard/DroidScript/droidscript-web/flags/id.png
+# mod=1545098915454, dir=false, size=481
+/sdcard/DroidScript/droidscript-web/flags/ie.png
+# mod=1545098915477, dir=false, size=431
+/sdcard/DroidScript/droidscript-web/flags/il.png
+# mod=1545098915455, dir=false, size=503
+/sdcard/DroidScript/droidscript-web/flags/in.png
+# mod=1545098915461, dir=false, size=658
+/sdcard/DroidScript/droidscript-web/flags/io.png
+# mod=1545098915497, dir=false, size=515
+/sdcard/DroidScript/droidscript-web/flags/iq.png
+# mod=1545098915465, dir=false, size=512
+/sdcard/DroidScript/droidscript-web/flags/ir.png
+# mod=1545098915481, dir=false, size=532
+/sdcard/DroidScript/droidscript-web/flags/is.png
+# mod=1545098915490, dir=false, size=420
+/sdcard/DroidScript/droidscript-web/flags/it.png
+# mod=1545098915477, dir=false, size=637
+/sdcard/DroidScript/droidscript-web/flags/jm.png
+# mod=1545098915463, dir=false, size=473
+/sdcard/DroidScript/droidscript-web/flags/jo.png
+# mod=1545098915467, dir=false, size=420
+/sdcard/DroidScript/droidscript-web/flags/jp.png
+# mod=1545098915486, dir=false, size=569
+/sdcard/DroidScript/droidscript-web/flags/ke.png
+# mod=1545098915483, dir=false, size=510
+/sdcard/DroidScript/droidscript-web/flags/kg.png
+# mod=1545098915458, dir=false, size=549
+/sdcard/DroidScript/droidscript-web/flags/kh.png
+# mod=1545098915465, dir=false, size=656
+/sdcard/DroidScript/droidscript-web/flags/ki.png
+# mod=1545098915490, dir=false, size=577
+/sdcard/DroidScript/droidscript-web/flags/km.png
+# mod=1545098915472, dir=false, size=604
+/sdcard/DroidScript/droidscript-web/flags/kn.png
+# mod=1545098915491, dir=false, size=561
+/sdcard/DroidScript/droidscript-web/flags/kp.png
+# mod=1545098915481, dir=false, size=592
+/sdcard/DroidScript/droidscript-web/flags/kr.png
+# mod=1545098915494, dir=false, size=486
+/sdcard/DroidScript/droidscript-web/flags/kw.png
+# mod=1545098915457, dir=false, size=643
+/sdcard/DroidScript/droidscript-web/flags/ky.png
+# mod=1545098915480, dir=false, size=616
+/sdcard/DroidScript/droidscript-web/flags/kz.png
+# mod=1545098915464, dir=false, size=563
+/sdcard/DroidScript/droidscript-web/flags/la.png
+# mod=1545098915488, dir=false, size=517
+/sdcard/DroidScript/droidscript-web/flags/lb.png
+# mod=1545098915455, dir=false, size=520
+/sdcard/DroidScript/droidscript-web/flags/lc.png
+# mod=1545098915496, dir=false, size=537
+/sdcard/DroidScript/droidscript-web/flags/li.png
+# mod=1545098915470, dir=false, size=627
+/sdcard/DroidScript/droidscript-web/flags/lk.png
+# mod=1545098915493, dir=false, size=466
+/sdcard/DroidScript/droidscript-web/flags/lr.png
+# mod=1545098915454, dir=false, size=628
+/sdcard/DroidScript/droidscript-web/flags/ls.png
+# mod=1545098915492, dir=false, size=508
+/sdcard/DroidScript/droidscript-web/flags/lt.png
+# mod=1545098915484, dir=false, size=481
+/sdcard/DroidScript/droidscript-web/flags/lu.png
+# mod=1545098915457, dir=false, size=465
+/sdcard/DroidScript/droidscript-web/flags/lv.png
+# mod=1545098915492, dir=false, size=419
+/sdcard/DroidScript/droidscript-web/flags/ly.png
+# mod=1545098915477, dir=false, size=432
+/sdcard/DroidScript/droidscript-web/flags/ma.png
+# mod=1545098915463, dir=false, size=380
+/sdcard/DroidScript/droidscript-web/flags/mc.png
+# mod=1545098915486, dir=false, size=566
+/sdcard/DroidScript/droidscript-web/flags/md.png
+# mod=1545098915490, dir=false, size=448
+/sdcard/DroidScript/droidscript-web/flags/me.png
+# mod=1545098915475, dir=false, size=453
+/sdcard/DroidScript/droidscript-web/flags/mg.png
+# mod=1545098915467, dir=false, size=628
+/sdcard/DroidScript/droidscript-web/flags/mh.png
+# mod=1545098915494, dir=false, size=664
+/sdcard/DroidScript/droidscript-web/flags/mk.png
+# mod=1545098915469, dir=false, size=474
+/sdcard/DroidScript/droidscript-web/flags/ml.png
+# mod=1545098915483, dir=false, size=483
+/sdcard/DroidScript/droidscript-web/flags/mm.png
+# mod=1545098915490, dir=false, size=492
+/sdcard/DroidScript/droidscript-web/flags/mn.png
+# mod=1545098915476, dir=false, size=588
+/sdcard/DroidScript/droidscript-web/flags/mo.png
+# mod=1545098915465, dir=false, size=597
+/sdcard/DroidScript/droidscript-web/flags/mp.png
+# mod=1545098915479, dir=false, size=655
+/sdcard/DroidScript/droidscript-web/flags/mq.png
+# mod=1545098915494, dir=false, size=569
+/sdcard/DroidScript/droidscript-web/flags/mr.png
+# mod=1545098915462, dir=false, size=614
+/sdcard/DroidScript/droidscript-web/flags/ms.png
+# mod=1545098915454, dir=false, size=420
+/sdcard/DroidScript/droidscript-web/flags/mt.png
+# mod=1545098915482, dir=false, size=496
+/sdcard/DroidScript/droidscript-web/flags/mu.png
+# mod=1545098915460, dir=false, size=542
+/sdcard/DroidScript/droidscript-web/flags/mv.png
+# mod=1545098915461, dir=false, size=529
+/sdcard/DroidScript/droidscript-web/flags/mw.png
+# mod=1545098915478, dir=false, size=574
+/sdcard/DroidScript/droidscript-web/flags/mx.png
+# mod=1545098915496, dir=false, size=571
+/sdcard/DroidScript/droidscript-web/flags/my.png
+# mod=1545098915471, dir=false, size=584
+/sdcard/DroidScript/droidscript-web/flags/mz.png
+# mod=1545098915475, dir=false, size=647
+/sdcard/DroidScript/droidscript-web/flags/na.png
+# mod=1545098915478, dir=false, size=591
+/sdcard/DroidScript/droidscript-web/flags/nc.png
+# mod=1545098915486, dir=false, size=537
+/sdcard/DroidScript/droidscript-web/flags/ne.png
+# mod=1545098915491, dir=false, size=602
+/sdcard/DroidScript/droidscript-web/flags/nf.png
+# mod=1545098915480, dir=false, size=482
+/sdcard/DroidScript/droidscript-web/flags/ng.png
+# mod=1545098915485, dir=false, size=508
+/sdcard/DroidScript/droidscript-web/flags/ni.png
+# mod=1545098915456, dir=false, size=453
+/sdcard/DroidScript/droidscript-web/flags/nl.png
+# mod=1545098915490, dir=false, size=512
+/sdcard/DroidScript/droidscript-web/flags/no.png
+# mod=1545098915488, dir=false, size=443
+/sdcard/DroidScript/droidscript-web/flags/np.png
+# mod=1545098915458, dir=false, size=527
+/sdcard/DroidScript/droidscript-web/flags/nr.png
+# mod=1545098915482, dir=false, size=572
+/sdcard/DroidScript/droidscript-web/flags/nu.png
+# mod=1545098915487, dir=false, size=639
+/sdcard/DroidScript/droidscript-web/flags/nz.png
+# mod=1545098915461, dir=false, size=478
+/sdcard/DroidScript/droidscript-web/flags/om.png
+# mod=1545098915483, dir=false, size=519
+/sdcard/DroidScript/droidscript-web/flags/pa.png
+# mod=1545098915493, dir=false, size=397
+/sdcard/DroidScript/droidscript-web/flags/pe.png
+# mod=1545098915494, dir=false, size=498
+/sdcard/DroidScript/droidscript-web/flags/pf.png
+# mod=1545098915463, dir=false, size=593
+/sdcard/DroidScript/droidscript-web/flags/pg.png
+# mod=1545098915487, dir=false, size=538
+/sdcard/DroidScript/droidscript-web/flags/ph.png
+# mod=1545098915467, dir=false, size=569
+/sdcard/DroidScript/droidscript-web/flags/pk.png
+# mod=1545098915474, dir=false, size=374
+/sdcard/DroidScript/droidscript-web/flags/pl.png
+# mod=1545098915456, dir=false, size=689
+/sdcard/DroidScript/droidscript-web/flags/pm.png
+# mod=1545098915482, dir=false, size=657
+/sdcard/DroidScript/droidscript-web/flags/pn.png
+# mod=1545098915454, dir=false, size=556
+/sdcard/DroidScript/droidscript-web/flags/pr.png
+# mod=1545098915460, dir=false, size=472
+/sdcard/DroidScript/droidscript-web/flags/ps.png
+# mod=1545098915463, dir=false, size=554
+/sdcard/DroidScript/droidscript-web/flags/pt.png
+# mod=1545098915479, dir=false, size=550
+/sdcard/DroidScript/droidscript-web/flags/pw.png
+# mod=1545098915481, dir=false, size=473
+/sdcard/DroidScript/droidscript-web/flags/py.png
+# mod=1545098915464, dir=false, size=450
+/sdcard/DroidScript/droidscript-web/flags/qa.png
+# mod=1545098915494, dir=false, size=545
+/sdcard/DroidScript/droidscript-web/flags/re.png
+# mod=1545098915497, dir=false, size=495
+/sdcard/DroidScript/droidscript-web/flags/ro.png
+# mod=1545098915485, dir=false, size=423
+/sdcard/DroidScript/droidscript-web/flags/rs.png
+# mod=1545098915495, dir=false, size=420
+/sdcard/DroidScript/droidscript-web/flags/ru.png
+# mod=1545098915458, dir=false, size=533
+/sdcard/DroidScript/droidscript-web/flags/rw.png
+# mod=1545098915468, dir=false, size=551
+/sdcard/DroidScript/droidscript-web/flags/sa.png
+# mod=1545098915468, dir=false, size=624
+/sdcard/DroidScript/droidscript-web/flags/sb.png
+# mod=1545098915474, dir=false, size=608
+/sdcard/DroidScript/droidscript-web/flags/sc.png
+# mod=1545098915462, dir=false, size=649
+/sdcard/DroidScript/droidscript-web/flags/scotland.png
+# mod=1545098915472, dir=false, size=492
+/sdcard/DroidScript/droidscript-web/flags/sd.png
+# mod=1545098915479, dir=false, size=542
+/sdcard/DroidScript/droidscript-web/flags/se.png
+# mod=1545098915489, dir=false, size=468
+/sdcard/DroidScript/droidscript-web/flags/sg.png
+# mod=1545098915464, dir=false, size=645
+/sdcard/DroidScript/droidscript-web/flags/sh.png
+# mod=1545098915456, dir=false, size=510
+/sdcard/DroidScript/droidscript-web/flags/si.png
+# mod=1545098915490, dir=false, size=512
+/sdcard/DroidScript/droidscript-web/flags/sj.png
+# mod=1545098915495, dir=false, size=562
+/sdcard/DroidScript/droidscript-web/flags/sk.png
+# mod=1545098915487, dir=false, size=436
+/sdcard/DroidScript/droidscript-web/flags/sl.png
+# mod=1545098915478, dir=false, size=502
+/sdcard/DroidScript/droidscript-web/flags/sm.png
+# mod=1545098915478, dir=false, size=532
+/sdcard/DroidScript/droidscript-web/flags/sn.png
+# mod=1545098915467, dir=false, size=527
+/sdcard/DroidScript/droidscript-web/flags/so.png
+# mod=1545098915486, dir=false, size=513
+/sdcard/DroidScript/droidscript-web/flags/sr.png
+# mod=1545098915489, dir=false, size=584
+/sdcard/DroidScript/droidscript-web/flags/st.png
+# mod=1545098915473, dir=false, size=501
+/sdcard/DroidScript/droidscript-web/flags/sv.png
+# mod=1545098915480, dir=false, size=422
+/sdcard/DroidScript/droidscript-web/flags/sy.png
+# mod=1545098915461, dir=false, size=643
+/sdcard/DroidScript/droidscript-web/flags/sz.png
+# mod=1545098915493, dir=false, size=624
+/sdcard/DroidScript/droidscript-web/flags/tc.png
+# mod=1545098915480, dir=false, size=570
+/sdcard/DroidScript/droidscript-web/flags/td.png
+# mod=1545098915496, dir=false, size=527
+/sdcard/DroidScript/droidscript-web/flags/tf.png
+# mod=1545098915472, dir=false, size=562
+/sdcard/DroidScript/droidscript-web/flags/tg.png
+# mod=1545098915489, dir=false, size=452
+/sdcard/DroidScript/droidscript-web/flags/th.png
+# mod=1545098915483, dir=false, size=496
+/sdcard/DroidScript/droidscript-web/flags/tj.png
+# mod=1545098915455, dir=false, size=638
+/sdcard/DroidScript/droidscript-web/flags/tk.png
+# mod=1545098915491, dir=false, size=514
+/sdcard/DroidScript/droidscript-web/flags/tl.png
+# mod=1545098915492, dir=false, size=593
+/sdcard/DroidScript/droidscript-web/flags/tm.png
+# mod=1545098915492, dir=false, size=495
+/sdcard/DroidScript/droidscript-web/flags/tn.png
+# mod=1545098915488, dir=false, size=426
+/sdcard/DroidScript/droidscript-web/flags/to.png
+# mod=1545098915487, dir=false, size=492
+/sdcard/DroidScript/droidscript-web/flags/tr.png
+# mod=1545098915473, dir=false, size=617
+/sdcard/DroidScript/droidscript-web/flags/tt.png
+# mod=1545098915475, dir=false, size=536
+/sdcard/DroidScript/droidscript-web/flags/tv.png
+# mod=1545098915466, dir=false, size=465
+/sdcard/DroidScript/droidscript-web/flags/tw.png
+# mod=1545098915474, dir=false, size=642
+/sdcard/DroidScript/droidscript-web/flags/tz.png
+# mod=1545098915471, dir=false, size=446
+/sdcard/DroidScript/droidscript-web/flags/ua.png
+# mod=1545098915477, dir=false, size=531
+/sdcard/DroidScript/droidscript-web/flags/ug.png
+# mod=1545098915459, dir=false, size=571
+/sdcard/DroidScript/droidscript-web/flags/um.png
+# mod=1545098915493, dir=false, size=609
+/sdcard/DroidScript/droidscript-web/flags/us.png
+# mod=1545098915494, dir=false, size=532
+/sdcard/DroidScript/droidscript-web/flags/uy.png
+# mod=1545098915469, dir=false, size=515
+/sdcard/DroidScript/droidscript-web/flags/uz.png
+# mod=1545098915456, dir=false, size=553
+/sdcard/DroidScript/droidscript-web/flags/va.png
+# mod=1545098915497, dir=false, size=577
+/sdcard/DroidScript/droidscript-web/flags/vc.png
+# mod=1545098915496, dir=false, size=528
+/sdcard/DroidScript/droidscript-web/flags/ve.png
+# mod=1545098915473, dir=false, size=630
+/sdcard/DroidScript/droidscript-web/flags/vg.png
+# mod=1545098915496, dir=false, size=616
+/sdcard/DroidScript/droidscript-web/flags/vi.png
+# mod=1545098915476, dir=false, size=474
+/sdcard/DroidScript/droidscript-web/flags/vn.png
+# mod=1545098915477, dir=false, size=604
+/sdcard/DroidScript/droidscript-web/flags/vu.png
+# mod=1545098915481, dir=false, size=652
+/sdcard/DroidScript/droidscript-web/flags/wales.png
+# mod=1545098915482, dir=false, size=554
+/sdcard/DroidScript/droidscript-web/flags/wf.png
+# mod=1545098915465, dir=false, size=476
+/sdcard/DroidScript/droidscript-web/flags/ws.png
+# mod=1545098915492, dir=false, size=413
+/sdcard/DroidScript/droidscript-web/flags/ye.png
+# mod=1545098915493, dir=false, size=593
+/sdcard/DroidScript/droidscript-web/flags/yt.png
+# mod=1545098915455, dir=false, size=642
+/sdcard/DroidScript/droidscript-web/flags/za.png
+# mod=1545098915495, dir=false, size=500
+/sdcard/DroidScript/droidscript-web/flags/zm.png
+# mod=1545098915466, dir=false, size=574
+/sdcard/DroidScript/droidscript-web/flags/zw.png
+# mod=1545098915431, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/font-awesome/css
+# mod=1545098915431, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/font-awesome/fonts
+# mod=1545098915446, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/fonts/open-sans
+# mod=1545098915407, dir=false, size=111
+/sdcard/DroidScript/droidscript-web/html/404.html
+# mod=1545098915407, dir=false, size=13727
+/sdcard/DroidScript/droidscript-web/html/app.html
+# mod=1545098915408, dir=false, size=13703
+/sdcard/DroidScript/droidscript-web/html/app.html.orig
+# mod=1545098915408, dir=false, size=208
+/sdcard/DroidScript/droidscript-web/html/index.html
+# mod=1545098915406, dir=false, size=84
+/sdcard/DroidScript/droidscript-web/html/redirect.html
+# mod=1545098915450, dir=false, size=97403
+/sdcard/DroidScript/droidscript-web/jquery/jquery-1.12.1.min.js
+# mod=1545098915437, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/jquery-mobile/images
+# mod=1545098915438, dir=false, size=207465
+/sdcard/DroidScript/droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.css
+# mod=1545098915438, dir=false, size=200143
+/sdcard/DroidScript/droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.js
+# mod=1545098915437, dir=false, size=235912
+/sdcard/DroidScript/droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.map
+# mod=1545098915437, dir=false, size=117863
+/sdcard/DroidScript/droidscript-web/jquery-mobile/jquery.mobile.inline-png-1.4.5.min.css
+# mod=1545098915439, dir=false, size=195666
+/sdcard/DroidScript/droidscript-web/jquery-mobile/jquery.mobile.inline-svg-1.4.5.min.css
+# mod=1545098915439, dir=false, size=68712
+/sdcard/DroidScript/droidscript-web/jquery-mobile/jquery.mobile.structure-1.4.5.min.css
+# mod=1545098915438, dir=false, size=11976
+/sdcard/DroidScript/droidscript-web/jquery-mobile/jquery.mobile.theme-1.4.5.min.css
+# mod=1545098915440, dir=false, size=1493
+/sdcard/DroidScript/droidscript-web/jquery-mobile-cards/card-css.css
+# mod=1545098915434, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/external
+# mod=1545098915436, dir=false, size=2069
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/index.html
+# mod=1545098915435, dir=false, size=4834
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/jquery.mobile.datepicker.css
+# mod=1545098915435, dir=false, size=5303
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/jquery.mobile.datepicker.js
+# mod=1545098915435, dir=false, size=2589
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/jquery.mobile.datepicker.theme.css
+# mod=1545098915435, dir=false, size=1321
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/mobile-datepicker-wrapper.jquery.json
+# mod=1545098915435, dir=false, size=2344
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/theme-template.css
+# mod=1545098915440, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/jquery-mobile-font-awesome/css
+# mod=1545098915498, dir=false, size=100786
+/sdcard/DroidScript/droidscript-web/polyfills/1.4.3_ydn.db-is-core-qry.js
+# mod=1545098915498, dir=false, size=62797
+/sdcard/DroidScript/droidscript-web/polyfills/sockjs.min.js
+# mod=1545098915409, dir=false, size=0
+/sdcard/DroidScript/droidscript-web/server/_tmp_13583_4676f03b2232ac95ba324563c1d06b27
+# mod=1545098915428, dir=false, size=246
+/sdcard/DroidScript/droidscript-web/server/config.json
+# mod=1545098915410, dir=false, size=4374
+/sdcard/DroidScript/droidscript-web/server/dirlist.js
+# mod=1545098915409, dir=false, size=17351
+/sdcard/DroidScript/droidscript-web/server/droidscript_svc.js
+# mod=1545098915428, dir=false, size=16420
+/sdcard/DroidScript/droidscript-web/server/droidscript_svc.js.orig
+# mod=1545098915410, dir=false, size=36973
+/sdcard/DroidScript/droidscript-web/server/dserve.js
+# mod=1545098915428, dir=false, size=36864
+/sdcard/DroidScript/droidscript-web/server/dserve.js.orig
+# mod=1545098915428, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/server/node_modules
+# mod=1545098915409, dir=false, size=49
+/sdcard/DroidScript/droidscript-web/server/package.json
+# mod=1545098915410, dir=false, size=9479
+/sdcard/DroidScript/droidscript-web/server/pnpm-debug.log
+# mod=1545098915409, dir=false, size=3722
+/sdcard/DroidScript/droidscript-web/server/runservice.js
+# mod=1545098915428, dir=false, size=770
+/sdcard/DroidScript/droidscript-web/server/version.js
+# mod=1545098915441, dir=false, size=19747
+/sdcard/DroidScript/droidscript-web/themes/default.css
+# mod=1545098915441, dir=false, size=15031
+/sdcard/DroidScript/droidscript-web/themes/default.min.css
+# mod=1545098915441, dir=false, size=31937
+/sdcard/DroidScript/droidscript-web/themes/green.css
+# mod=1545098915441, dir=false, size=127053
+/sdcard/DroidScript/droidscript-web/themes/jquery.mobile.icons.min.css
+# mod=1545098915449, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/wSelect/img
+# mod=1545098915450, dir=false, size=4190
+/sdcard/DroidScript/droidscript-web/wSelect/wSelect.css
+# mod=1545098915450, dir=false, size=1019
+/sdcard/DroidScript/droidscript-web/wSelect/wSelect.jquery.json
+# mod=1545098915450, dir=false, size=14231
+/sdcard/DroidScript/droidscript-web/wSelect/wSelect.js
+# mod=1545098915447, dir=false, size=6224
+/sdcard/DroidScript/droidscript-web/wSelect/wSelect.min.js
+# mod=1545098915432, dir=false, size=556
+/sdcard/DroidScript/droidscript-web/wrappers/jquery-mobile-init.js
+# mod=1545098915432, dir=false, size=3032
+/sdcard/DroidScript/droidscript-web/wrappers/jquery-mobile.css
+# mod=1545098915433, dir=false, size=3032
+/sdcard/DroidScript/droidscript-web/wrappers/jquery-mobile.css.orig
+# mod=1547766900686, dir=false, size=120180
+/sdcard/DroidScript/droidscript-web/wrappers/jquery-mobile.js
+# mod=1545098915432, dir=false, size=109826
+/sdcard/DroidScript/droidscript-web/wrappers/jquery-mobile.js.orig
+# mod=1545098915431, dir=false, size=33233
+/sdcard/DroidScript/droidscript-web/font-awesome/css/font-awesome.css
+# mod=1545098915431, dir=false, size=27466
+/sdcard/DroidScript/droidscript-web/font-awesome/css/font-awesome.min.css
+# mod=1545098915430, dir=false, size=109688
+/sdcard/DroidScript/droidscript-web/font-awesome/fonts/XFontAwesome.otf
+# mod=1545098915430, dir=false, size=70807
+/sdcard/DroidScript/droidscript-web/font-awesome/fonts/Xfontawesome-webfont.eot
+# mod=1545098915430, dir=false, size=142072
+/sdcard/DroidScript/droidscript-web/font-awesome/fonts/Xfontawesome-webfont.ttf
+# mod=1545098915429, dir=false, size=83588
+/sdcard/DroidScript/droidscript-web/font-awesome/fonts/Xfontawesome-webfont.woff
+# mod=1545098915430, dir=false, size=365616
+/sdcard/DroidScript/droidscript-web/font-awesome/fonts/fontawesome-webfont.svg
+# mod=1545098915431, dir=false, size=66624
+/sdcard/DroidScript/droidscript-web/font-awesome/fonts/fontawesome-webfont.woff2
+# mod=1545098915444, dir=false, size=11560
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/LICENSE.txt
+# mod=1545098915445, dir=false, size=224592
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/OpenSans-Bold.ttf
+# mod=1545098915443, dir=false, size=213292
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/OpenSans-BoldItalic.ttf
+# mod=1545098915446, dir=false, size=222584
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/OpenSans-ExtraBold.ttf
+# mod=1545098915443, dir=false, size=213420
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/OpenSans-ExtraBoldItalic.ttf
+# mod=1545098915445, dir=false, size=212896
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/OpenSans-Italic.ttf
+# mod=1545098915445, dir=false, size=222412
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/OpenSans-Light.ttf
+# mod=1545098915444, dir=false, size=213128
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/OpenSans-LightItalic.ttf
+# mod=1545098915442, dir=false, size=217360
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/OpenSans-Regular.ttf
+# mod=1545098915446, dir=false, size=221328
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/OpenSans-Semibold.ttf
+# mod=1545098915444, dir=false, size=212820
+/sdcard/DroidScript/droidscript-web/fonts/open-sans/OpenSans-SemiboldItalic.ttf
+# mod=1545098915437, dir=false, size=6242
+/sdcard/DroidScript/droidscript-web/jquery-mobile/images/ajax-loader.gif
+# mod=1545098915434, dir=true, size=4096
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/external/jquery-ui
+# mod=1545098915440, dir=false, size=115121
+/sdcard/DroidScript/droidscript-web/jquery-mobile-font-awesome/css/jqm-font-awesome-usvg-upng.min.css
+# mod=1545098915449, dir=false, size=442
+/sdcard/DroidScript/droidscript-web/wSelect/img/AU.png
+# mod=1545098915448, dir=false, size=389
+/sdcard/DroidScript/droidscript-web/wSelect/img/CA.png
+# mod=1545098915449, dir=false, size=290
+/sdcard/DroidScript/droidscript-web/wSelect/img/PL.png
+# mod=1545098915448, dir=false, size=289
+/sdcard/DroidScript/droidscript-web/wSelect/img/TH.png
+# mod=1545098915448, dir=false, size=542
+/sdcard/DroidScript/droidscript-web/wSelect/img/UK.png
+# mod=1545098915449, dir=false, size=389
+/sdcard/DroidScript/droidscript-web/wSelect/img/US.png
+# mod=1545098915447, dir=false, size=825
+/sdcard/DroidScript/droidscript-web/wSelect/img/archery.png
+# mod=1545098915447, dir=false, size=48719
+/sdcard/DroidScript/droidscript-web/wSelect/img/arrow-down-black.png
+# mod=1545098915448, dir=false, size=537
+/sdcard/DroidScript/droidscript-web/wSelect/img/arrow-down.png
+# mod=1545098915448, dir=false, size=799
+/sdcard/DroidScript/droidscript-web/wSelect/img/baseball.png
+# mod=1545098915449, dir=false, size=791
+/sdcard/DroidScript/droidscript-web/wSelect/img/basketball.png
+# mod=1545098915449, dir=false, size=813
+/sdcard/DroidScript/droidscript-web/wSelect/img/curling.png
+# mod=1545098915449, dir=false, size=709
+/sdcard/DroidScript/droidscript-web/wSelect/img/skiing.png
+# mod=1545098915447, dir=false, size=52269
+/sdcard/DroidScript/droidscript-web/wSelect/img/soccer.png
+# mod=1545098915448, dir=false, size=782
+/sdcard/DroidScript/droidscript-web/wSelect/img/volleyball.png
+# mod=1545098915434, dir=false, size=109959
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/external/jquery-ui/datepicker-fr.js
+# mod=1545098915434, dir=false, size=108869
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/external/jquery-ui/datepicker-it.js
+# mod=1545098915434, dir=false, size=77873
+/sdcard/DroidScript/droidscript-web/jquery-mobile-datepicker/external/jquery-ui/datepicker.js
+
+NETWORK:
+*
