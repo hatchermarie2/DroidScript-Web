@@ -28,6 +28,9 @@ cd "$DIR"
 # }
 
 clear
+
+[ ! -d node_modules/ ] && ./install-deps.sh
+
 echo "Starting $APP..."
 NODE=node
 #chooseBinary
