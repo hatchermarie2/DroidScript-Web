@@ -1,5 +1,6 @@
 #!/bin/bash
 # Must be copied to System /usr/local/bin and added to /usr/local/bin/startkde, etc.
+# (In ChromeOS, not in the Crouton chroot)
 
 # Mount Android root to Crouton-visible location
 # Also mount external DATA drive to Android-visible location
