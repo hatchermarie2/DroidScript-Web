@@ -5,30 +5,32 @@ CMD=$0
 DIR=$(dirname "$CMD")
 cd "$DIR"
 
-chooseBinary() {
-	# Below, choose correct binary modules for our architecture
-    v=$(uname -m)
-	[ "${v:0:4}" != "armv" ] && NODE=node && return
-
-        if [ "$v" = "armv6l" ]; then
-                dir="$HOME/node_modules/fibers/bin/linux-arm-48"
-                if [ ! -d "$dir" -a -f linux-arm-48_fibers.node ]; then
-                        mkdir -p "$dir" 
-                        ln linux-arm-48_fibers.node "$dir/fibers.node"
-                fi
-                NODE="$HOME/node-armv6l"
-        elif [ "$v" = "armv7l" ]; then
-                dir="$HOME/node_modules/fibers/bin/linux-arm-51"
-                if [ ! -d "$dir" -a -f linux-arm-51_fibers.node ]; then
-                        mkdir -p "$dir"
-                        ln linux-arm-51_fibers.node "$dir/fibers.node"
-                fi
-        fi
-}
+# Unnecessary if we aren't using fibers
+# chooseBinary() {
+# 	# Below, choose correct binary modules for our architecture
+#     v=$(uname -m)
+# 	[ "${v:0:4}" != "armv" ] && NODE=node && return
+# 
+#         if [ "$v" = "armv6l" ]; then
+#                 dir="$HOME/node_modules/fibers/bin/linux-arm-48"
+#                 if [ ! -d "$dir" -a -f linux-arm-48_fibers.node ]; then
+#                         mkdir -p "$dir" 
+#                         ln linux-arm-48_fibers.node "$dir/fibers.node"
+#                 fi
+#                 NODE="$HOME/node-armv6l"
+#         elif [ "$v" = "armv7l" ]; then
+#                 dir="$HOME/node_modules/fibers/bin/linux-arm-51"
+#                 if [ ! -d "$dir" -a -f linux-arm-51_fibers.node ]; then
+#                         mkdir -p "$dir"
+#                         ln linux-arm-51_fibers.node "$dir/fibers.node"
+#                 fi
+#         fi
+# }
 
 clear
 echo "Starting $APP..."
-chooseBinary
+NODE=node
+#chooseBinary
 while [ true ]; do
     "$NODE" dsmain.js
     sleep 5

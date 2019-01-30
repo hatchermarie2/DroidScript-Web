@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-//module.exports.x=
-//module.exports.
-
+// NOTE: This is only used for testing with testcli.sh and stopcli.sh
 // *********************************************************************************
 
 var fsp =require('path');
@@ -40,19 +38,26 @@ ipc.config.silent=true;
 ipc.config.maxRetries=0;
 
 function doConnect() {
+    console.log("CLIENT:doConnect: tries="+this.tries);
     if(!this.connected) {
         this.tries++;
+        console.log("CLIENT:Connecting...");
         ipc.connectTo('service', "/tmp/SERVICE-"+this.id+".sock",
             function() {
                 ipc.of.service.on('connect', function() {
+                    console.log("CLIENT:Connected");
                     this.connected=true;
                     if(this.send) {
-                        console.log("SEND: "+this.send);
+                        console.log("CLIENT:SEND: "+this.send);
                         ipc.of.service.emit(this.send,null); // E.g. "stop"
                     }
-                    else { ipc.of.service.emit('inituser',JSON.stringify({user:'test'})); }
+                    else { 
+                        console.log("CLIENT:Initializing...");
+                        ipc.of.service.emit('inituser',JSON.stringify({user:'test'})); }
                 }.bind(this));
-                ipc.of.service.on('disconnect',function() {}.bind(this));
+                ipc.of.service.on('disconnect',function() {
+                    console.log("CLIENT:Disconnect");
+                }.bind(this));
                 ipc.of.service.on('message', function(data) {
                     console.log('got a message from '+this.id+' Service : ', data);
                 }.bind(this));
@@ -63,16 +68,19 @@ function doConnect() {
 }
 
 function checkConnect() {
+    console.log("CLIENT:checkConnect");
     setTimeout(function() {
         //console.log('Connected: '+this.connected);
         if(!this.connected) {
-            if(!this.connecting) {
+            console.log("CLIENT:tries="+this.tries);
+            if(!this.connecting && this.tries>10) {
                 this.connecting=true;
                 var path=fsp.join(svrbase,'droidscript_svc.js');
+                console.log("CLIENT:Starting service...");
                 var sProc = cp.fork(path, ['--id', this.id], {detached:true});
                 //setTimeout(doConnect.bind(this), 0);
             }
-            setTimeout(doConnect.bind(this), 200);
+            setTimeout(doConnect.bind(this), 1200);
         }
     }.bind(this),10);
 }
@@ -89,7 +97,7 @@ if(opts.stop) {
 
 //if(!opts.stop) {
 //    setTimeout(() => {
-//        console.log("\n\nSending another message...");
+//        console.log("CLIENT:\n\nSending another message...");
 //        ipc.of.service.emit('message','Another Message');
 //    }, 5000);
 //}

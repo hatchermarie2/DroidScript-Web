@@ -1,8 +1,12 @@
 const fsp = require('path'); // path join
 const fs  = require('fs');
 const AppRoot=fsp.dirname(process.argv[1]);
-const _blacklist=["/dstart","/dsmain.js","/LICENSE","/NOTES.md","/README.md","/updev.sh","/todo.txt","/tmp"];
+const _blacklist=["/dstart","/dsmain.js","/LICENSE","/NOTES.md","/README.md","/updev.sh","/todo.txt","/tmp",
+    "/node_modules","/package.json","/package-lock.json","/stopcli.sh","/testcli.sh","/test.sqlite","/testsvr.sh"
+];
     //"/sdcard/DroidScript/droidscript-web"]; // Ban app write access and don't list in directory
+    // node_modules  package.json  package-lock.json  stopcli.sh  testcli.sh  test.sqlite  testsvr.sh  
+
 
 module.exports={
     dirlist:dirlist, 

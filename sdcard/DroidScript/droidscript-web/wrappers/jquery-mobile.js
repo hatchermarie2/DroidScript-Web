@@ -23,16 +23,24 @@ var _started = false;
 var _menu="";
 var _backPressed=0;
 var _front_child_index=99;
+var _debug=false;
+
+_destroyed=[];
 
 function _getGUIImpl()
 {
-	return new JQueryMoble();
+	return new JQueryMobile();
 }
 
-function JQueryMoble()
+function JQueryMobile()
 {
 	var isMobile = (/Android|webOS|iPhone|iPad|iPod|BlackBerry|BB|PlayBook|IEMobile|Windows Phone|Kindle|Silk|Opera Mini/i.test(navigator.userAgent));
 	var backColor = null;
+	
+	function getPanelWrapper() { return $("div .ui-panel-wrapper"); }
+	function getPage() { return $("div[data-role='page']"); }
+	function getPageContent() {	return $("div[data-role='page'] .ui-content"); }
+	function getHeader() { return $("div[data-role='header']"); }
 	
 	this.IsMobile = function() { return isMobile; };
 	this.GetScreenWidth = function() { return $(window).width() };
@@ -40,7 +48,7 @@ function JQueryMoble()
  	this.GetDisplayWidth = function() { return $(window).width() };
  	this.GetDisplayHeight = function() { return $(window).height() };
 	this.GetScreenDensity = function() { return 96; }; // nominal Dots per Inch for desktop displays.  No way to actually know on the web.  See https://stackoverflow.com/questions/21680629/getting-the-physical-screen-dimensions-dpi-pixel-density-in-chrome-on-androi/25069057?utm_medium=organic
-	this.SetDebugEnabled = function(enable) { console.log("ERROR: SetDebugEnabled not implemented server-side yet."); };
+	this.SetDebugEnabled = function(enable) { _debug=enable; };
 	this.GetOrientation = function() {
         if(_h > _w) { return "Portrait"; }
         return "Landscape";
@@ -103,12 +111,14 @@ function JQueryMoble()
     this.CreateListDialog = function(title, list, options) 
     {
 		var dialog = new JQueryMobile_LstDlg(title, list, options);
-		if(dialog !== null) 
-		{ 
-			getPage().append(dialog);
-			dialog.popup();
-			dialog.popup("open");
-		}
+ 		if(dialog !== null) 
+ 		{ 
+            // Due to apparent race condition, delayed append fixes later appended elements getting duplicate not part of DOM.
+ 			setTimeout(function() { getPage().append(dialog); }, 0);
+ 			dialog.popup();
+ 			if(options && options.toLowerCase().indexOf('shownow') > -1) dialog.Show();
+ 		}
+		
 		return dialog;
     }
 	this.CreateMap = function(url,width,height,options) { return new JQueryMobile_Map(url, width, height, options); };
@@ -119,6 +129,8 @@ function JQueryMoble()
 
 	this.AddLayout = function( layout ) { 
 		getPageContent().append(layout);
+        // FIXME: Reposition all children now that we have a parent (trigger FINDING PARENT)
+        _updatePositions(layout[0]);
 	};
 
 	this.RemoveLayout = function( layout ) { 
@@ -126,7 +138,13 @@ function JQueryMoble()
 	};
 
 	this.DestroyLayout = function( layout ) { 
-		layout.remove();
+        console.log("FIXME: DestroyLayout: parent="+layout[0].parentElement);
+        //layout[0].innerHTML="test1 DestroyLayout";
+        //layout.Destroy();
+		//layout.remove();
+        _destroyed.push(layout);
+        //layout[0].parentElement.parentElement.innerHTML="";
+        document.getElementById('contentMain').innerHTML="";
 	};
 
 	this.ShowPopup = function(msg, options) {
@@ -145,10 +163,19 @@ function JQueryMoble()
 		$("#showPopup").popup();
 		$("#showPopup").popup("open");
 
-		setTimeout(function() {
+        //console.log("OPENING Popup for "+duration);
+        if(this._popupTimeout) { clearTimeout(this._popupTimeout); }
+		this._popupTimeout=setTimeout(function() {
+            //console.log("CLOSING Popup after "+duration);
 			$("#showPopup").popup("close");
 		}, duration);
 	};
+    this.GetThumbnail = function( srcImg, dstImg, width, height ) { 
+        var path="/thumbnail?srcimg="+srcImg+"&dstimg="+dstImg+"&width="+width+"&height="+height;
+        var xhReq = new XMLHttpRequest();
+        xhReq.open("GET", path, false);
+        xhReq.send(null);
+    }
     
 //        if(path[0] != '/') { path = _prefix+path; }
 //         var results=[];
@@ -172,7 +199,11 @@ function JQueryMoble()
         while(path.length>1 && path[path.length-1] == '/') { path=path.substr(0,path.length-1); } // Trim trailing slashes
         var ret=_retrieveFolder(path);
         if(!ret) { return []; }
-        return JSON.parse(ret);
+        ret=JSON.parse(ret);
+        ret=filter ? ret.filter((f,x) => f.lastIndexOf(filter) === f.length - filter.length && (limit ? x <= limit : true)) : ret;
+        if(options.indexOf('alphasort') > -1) ret=ret.sort();
+        if(options.indexOf('fullpath') > -1) ret=ret.map(f => path+'/'+f);
+        return ret;
     };
     
     this.MakeFolder = function(path) {
@@ -188,10 +219,11 @@ function JQueryMoble()
     };
 
     this.FileExists = function(path) {
+        console.log("FileExists "+path);
         var dir=path.match(/.*\//)[0].replace(/\/$/,'');
         var list=this.ListFolder(dir);
         var base=path.replace(/.*\//,"");
-        console.log(list,base);
+        //console.log(list,base);
         var isFound = list.find( (el) => { return el === base; }) != null;
         if(!isFound) { return false; }
         // Something is here, but is it a file or a folder?
@@ -208,6 +240,10 @@ function JQueryMoble()
         // NOTE: Need: Sync files/folders TO server (if permissions allow)
         // NOTE: Private folder and its contents should generally be allowed (excepting bandwidth/resource limits exceeded)
         // NOTE: Constraints per IP and/or cookie / bandwidth usage should be checked first
+    };
+    
+    this.DeleteFile = function(path) {
+        console.log("FIXME: DeleteFile (secure) unimplemented: "+path);
     };
 
     this.StartApp = function( file, options, intent ) {
@@ -230,6 +266,11 @@ function JQueryMoble()
         alert('menu:'+_menu);
     };
     
+    this._onError = function() { };
+    this.SetOnError = function( callback ) {
+        this._onError=callback;
+    };
+    
     this.EnableBackKey = function( enable ) {
         if(enable) {
             window.removeEventListener('popstate');
@@ -244,8 +285,22 @@ function JQueryMoble()
             });
         }
     };
+    this.GetFileDate = function(path) {
+        var xhReq = new XMLHttpRequest();
+        xhReq.open("HEAD", path, false);
+        xhReq.send(null);
+        var d = xhReq.getResponseHeader("Last-Modified");
+        //console.log("DATE status="+xhReq.status+"; path="+path+"; d="+d);
+        //var clen = xhReq.getResponseHeader('Content-Length');
+        //alert('clen='+clen+", "+xhReq.responseText);
+        if( d ) return new Date(d);
+        return null; 
+    }
     
     this.ReadFile = function(path) { return _load_binary_resource(path); } //_fetchFileSync(path); };
+    this.WriteFile = function(path, txt) { 
+        console.log("ERROR: app.WriteFile NOT IMPLEMENTED: "+path+",txt="+txt);
+    }
 
     this.LoadText = function( valueName, dft, shareId ) {
         if(!dft) { dft=""; }
@@ -280,20 +335,43 @@ function JQueryMoble()
     }
 
 	this.SetBackColor = function( clr ) { backColor = clr; getPage().css("background-color", clr); getPanelWrapper().css("background-color", clr); };
-	
-	function getPanelWrapper() { return $("div .ui-panel-wrapper"); }
-	function getPage() { return $("div[data-role='page']"); }
-	function getPageContent() {	return $("div[data-role='page'] .ui-content"); }
-	function getHeader() { return $("div[data-role='header']"); }
-	
 
+	this.ShowProgress = function(msg, options, clr ) { _loadProgress(-1, msg); };
+	this.HideProgress = function() { _loadProgress(-1, null); };
+
+}
+
+function _updatePositions(element) {
+    if(!element) { return; }
+    if(element && element.id && element.id == "lay29") { console.log("Updating POSITIONS "+(element.id?element.id:"(null)")); }
+    var es=element.style;
+    if(element && element.id && element.id == "lay29") { console.log("es POS top="+es.top+";left="+es.left); }
+    if(es && es.left != "" && es.top != "" && typeof parseFloat(es.left) === "number" && typeof parseFloat(es.top) === "number") {
+        var left=parseFloat(es.left)/100;
+        var top=parseFloat(es.top)/100;
+        if(element && element.id && element.id == "lay29") { console.log("_SetPOS "+top); }
+        _SetPosition(element,left,top);
+    }
+    var chn=element.children;
+    for(var xa=0; xa<chn.length; xa++) { _updatePositions(chn[xa]); }
+    //console.log("Updating POSITIONS done "+element.id);
 }
 
 function JQueryMobile_Lay(type, options)
 {
 	var lay = $("<div>");
-	lay.css( { display:"block", "text-align":"center", "white-space":"nowrap", "overflow":"hidden" } );
+    lay.attr("class", "lay");
+	//lay.css( { display:"block", "text-align":"center", "white-space":"nowrap", "overflow":"hidden", "margin": "0px", "padding": "0px" } );
 	_initObj(lay);
+	lay.attr("id", "lay" + (++_jqmId));
+    lay.hide = function() {
+        //console.log("HIDE "+lay.css("id")+new Error().stack);
+        lay.css( { visibility:"hidden" } );
+    };
+    lay.show = function() {
+        //console.log("HIDE "+lay.css("id")+new Error().stack);
+        lay.css( { visibility:"visible" } );
+    };
 
 	options = options ? options.toLowerCase() : "";
 
@@ -317,12 +395,17 @@ function JQueryMobile_Lay(type, options)
 	{
 		lay.css( { "text-align": "right" } );
 	}
+	else {
+		lay.css( { "text-align": "center" } );
+    }
 
 	var orientation = "vertical";
+    var absoluteLayout=false;
 
     if(type) {
         type = type.toLowerCase();
         if(type=="horizontal" || type=="vertical") { _transitionalAPI=true; } // DroidScript API uses options for this
+        if(type=="absolute") { absoluteLayout=true; }
     }
 	if(options.indexOf("horizontal") >-1 || 
         type && type.toLowerCase()=="horizontal") // Web-only API
@@ -349,22 +432,86 @@ function JQueryMobile_Lay(type, options)
 			}
 		}
 
-		lay.append( child );
+        // NOTE: Below is a hack that will not always work, if partially covered siblings should receive events over the uncovered area.
+        // NOTE: This is to solve an issue with background siblings stealing events even though their z-order is lower.
+ 		var children=lay[0].children;
+ 		for(var xa=0; xa<children.length; xa++) {
+            var sibling=children[xa];
+            if(sibling.id.indexOf('imgwrap') > -1) {
+                var schild=sibling.children[0];
+                schild.style.pointerEvents="none"; // Make background siblings inactive
+                console.log("DEACTIVATED "+schild.id);
+            }
+         }
+         if(absoluteLayout) { _wrapAppendIfImage(lay, child); }
+         else { lay.append( child ); }
+        
+        child[0].style.pointerEvents=""; // Make foreground child active.
+        //lay.append( child );
 
-		if(orientation === "vertical")
-			lay.append("<br>");
-
+        //if(orientation === "vertical")
+        //    lay.append("<br>");
+        
 		if(child.init)
 			child.init();
+        
+        _updatePositions(child); // Reposition child now that it has a parent
 	};
     
     lay.ChildToFront = function() {
         lay.css( {"z-index": _front_child_index++} );
     };
     
+    lay.Animate = function(type, callback) {
+        lay.animate({width: "toggle"});
+    };
+    
     lay.detach = function() { console.log("FIXME: JQueryMobile_Lay.detach is not implemented"); };
 
+    //console.log("ID: "+lay.attr("id")+"; style: "+lay.attr("style"));
+	//lay.css( { height:"100%" } ); // FIXME: Setting height 100% to avoid height: 0px
 	return lay;
+}
+
+// Set child "overflow":"auto" 
+function _autoScrollChild(lay, child) {
+    child.css({overflow:"visible"}); // or auto, inherit, visible
+    console.log("FIXME: _autoScrollChild for all descendends");
+}
+
+// Append child to layout, wrapping images in a relative positioned div, but positioning child absolute or fixed at top/left
+function _wrapAppendIfImage(lay, child) {
+    console.log("APPENDING lay="+lay[0].id);
+    var tgt=lay;
+    var chid=child.attr("id");
+    if(chid && chid.indexOf('img') == 0) {
+        console.log("IMG:"+lay.attr("id")+".AddChild "+chid); 
+        var t=lay.children('div');
+        var found=false;
+        for(var xa=0; xa<t.length; xa++) {
+            var id=t[xa].id;
+            console.log("id="+id);
+            if(id.indexOf('imgwrap') === 0) { tgt=$(t[xa]); found=true; break; }
+        }
+        console.log("found="+found+";tgt="+tgt);
+        _tgt=tgt;
+        if(!found) {
+            tgt = $("<div>");
+            tgt.attr("id", "imgwrap" + (++_jqmId));
+            // lay.css( { position:"relative", width:"95vw", height:"90vh" } );
+            var maxw=child.css("width");  // FIXME: Set to maximum of all widths/heights of this child and other children of this layout
+            var maxh=child.css("height"); // FIXME: Also, need to update every time child resizes
+            tgt.css( { position:"relative", width:maxw, height:maxh } );
+            child.css( { position:"absolute" } );
+            if(child.css("left") == "auto" && child.css("top") == "auto") { // Override position if not set already
+                child.css( { left:"0px", top:"0px" } );
+            }
+            lay.append(tgt);
+        }
+    }
+
+    tgt.append( child );
+
 }
 
 function JQueryMobile_Loc(type, options) {
@@ -434,8 +581,11 @@ function JQueryMobile_Dwn() {
 function JQueryMobile_Scr(width, height, options)
 {
 	var scr = $("<div>");
-	scr.css( { display:"block", "text-align":"center", "white-space":"nowrap", "overflow":"hidden", "background-color":"black" } );
+	scr.css( { display:"block", "text-align":"center", "white-space":"nowrap", "overflow":"hidden", 
+        "overflow-x": "scroll", "overflow-y":"scroll", "height":"100vh", "width":"98vw",
+        "background-color":"black" } );
 	_initObj(scr);
+    scr.attr("id", "scr" + (++_jqmId));
 
 	options = options ? options.toLowerCase() : "";
 
@@ -465,7 +615,9 @@ function JQueryMobile_Scr(width, height, options)
         child.removeClass("horizontal-child");
         child.addClass("vertical-child");
 
-		scr.append( child );
+   		_wrapAppendIfImage(scr, child);
+        _autoScrollChild(scr, child);
+
 
 		scr.append("<br>");
 
@@ -484,60 +636,196 @@ function JQueryMobile_Scr(width, height, options)
 	return scr;
 }
 
+// NOTE: This is used to handing drawing commands sent to an image that is loading asynchronously.
+// NOTE: While the image is loading, the commands are buffered, then sent once loading is complete.
+// NOTE: if runFirst is true, commands will be run twice, initially while being buffered, and again
+// NOTE: when _replay() is called.
+function _ReplayMethodCalls(obj, runFirst)
+{
+    var runNow=false;
+    var buffer=[];
+    const handler = {
+        get(target, propKey, receiver) {
+            const targetValue = Reflect.get(target, propKey, receiver);
+            if (typeof targetValue === 'function') {
+                return function (...args) {
+//                    console.log('REPLAY:CALL', propKey, args);
+                    buffer.push({fn:targetValue, obj:this, args:args});
+                    try { if(runFirst) return targetValue.apply(this, args); } // (A)
+                    catch(e) {
+                        console.log("ERROR in "+this.constructor.name+": "+e.message);
+                    }
+                }
+            } else {
+                if(!targetValue && propKey == '_replay') {
+                    return function (...args) {
+                        runNow=true;
+                        var cmd=null;
+                        //console.log("REPLAYing "+buffer.length+" calls");
+                        while(cmd=buffer.shift()) { 
+//                            console.log('REPLAY type '+(typeof cmd.obj)+', obj='+obj);
+//                            _fn=cmd.fn; _obj=cmd.obj; __obj=obj; _args=cmd.args;
+                            cmd.fn.apply(obj, cmd.args); }
+                        return;
+                    }
+                }
+//                console.log('REPLAY:GET',targetValue+', propKey='+propKey);
+                return targetValue;
+            }
+        },
+        set(target, propKey, value) {
+            //console.log('SET',target,propKey,value);
+            if(runFirst || runNow) target[propKey]=value;
+            buffer.push({fn:function() { target[propKey]=value; }, obj:this, args:null});
+        }
+    };
+    return new Proxy(obj, handler);    
+}
+
+/**
+ * REPLAY LIMG:/sdcard/ConexKeeper-2/maps/map3final-59.036104_-158.531487.v3.png;id=img121;cw=1280;ch=2690;scale=1.1437074829931972 jquery-mobile.js:627:9
+REPLAYing 569 calls jquery-mobile.js:585:25
+REPLAY LIMG:/sdcard/ConexKeeper-2/maps/map3final-59.036104_-158.531487.v3.png;id=img120;cw=0;ch=0;scale=0 jquery-mobile.js:627:9
+REPLAYing 0 calls
+
+**/
 function JQueryMobile_Img(file, width, height, options, w, h)
 {
+    this._width=width; this._height=height;
 	var w = width, h = height;
-    var _textStyle="";
-    var _textSize="10pt";
-    var _textFont="sans-serif";
-	var img = $("<canvas id='img'>Your browser does not support Canvas</canvas>");
+	var img = $("<canvas>Your browser does not support Canvas</canvas>");
 	_initObj(img);
-	_setSize(img, width, height, options);
+    img.attr("border","1px solid #ff0000");
+    var imgId="img" + (++_jqmId);
+    img.attr("id", imgId);
+	_setSize(img, width, height, options, true);
+    console.log("drawPhotos:width="+img[0].width+",sw="+img[0].style.width+"; height="+img[0].height+",sh="+img[0].style.height);
+    img._textStyle="";
+    img._textSize="10pt";
+    img._textFont="sans-serif";
     img._paintColor="black"; // default
-    var initImg=new Image();
-    initImg.src=file;
-    var ctx = img[0].getContext("2d");
-    initImg.onload = function() { ctx.drawImage(initImg, 0, 0); }
-
+    //img.width=width; img.height=height;
+    img._drawq=[]; // List of other images waiting to draw this image (when it loads)
+    img._waitList=[]; // Associative array keyed on IDs of images this image is waiting to draw
+    //console.log("IMG:"+file+";id="+img.attr("id"));
+    var realCtx=img[0].getContext("2d");
+    var fakeCtx = new _ReplayMethodCalls(realCtx); // Handle commands sent to asynchronously-loading image
+    var ctx = file?fakeCtx:realCtx;
+    ctx.translate(0.5,0.5); // Put lines on half-pixels -- origin is the middle of each pixel.
+    
 	options = options ? options.toLowerCase() : "";
+    
+    img._scale = function(...args) {
+        var w=this.width(), h=this.height();
+        var scale=Math.min(w, h);
+        for(var xa=0; xa<args.length; xa++) {
+            args[xa]*= (xa==0?w:(xa==1?h:scale));
+        }
+        return args;
+    }
+    img._notifyReady = function(imgId) {
+        //console.log("IMG DrawImage:drawPhotos:"+imgId);
+        delete img._waitList[imgId]; // No longer waiting for this image.
+        var count=0;
+        for(id in img._waitList) { count++; }
+        // If no images to wait for, draw buffered commands
+        if(count === 0) { 
+            //console.log("IMG notifyReady ALL READY DrawImage:drawPhotos:src="+img._initImg.src);
+            ctx._replay(); ctx=realCtx; 
+        }
+    }
+    img.touchable=false;
 
-	img.Clear = function() { console.log("Clear not implemented"); } 
-    img.Update = function() { console.log("Update not implemented"); }
-    img.SetAutoUpdate = function( onoff ) { console.log("SetAutoUpdate not implemented"); }
-    img.SetName = function( name ) { console.log("SetName not implemented"); }
-    img.GetName = function() { console.log("GetName not implemented"); return ""; }
+    //                        thumb,0,0,-1,1,0
+    img.DrawImage = function( image,x,y,w,h,angle,mode ) { 
+        if(!image._ready) { // If any image we try to draw is not ready, buffer future commands until all images are ready
+            ctx=fakeCtx;
+            img._waitList[image.attr("id")]=image;
+            image._drawq.push(img);
+            //console.log("IMG:DrawImage:drawPhotos (not ready) IN "+img[0].id+":"+image._initImg.src);
+        }
+        if(w<0) { w=1; }
+        if(h<0) { h=1; }
+        [x,y,w,h]=img._scale(x,y,w,h);
+        //console.log("IMG:DrawImage:drawPhotos:#"+image[0].id+";"+image._initImg.src+" ONTO "+img._initImg.src+" AT x="+x+",y="+y+",w="+w+",h="+h+"; img._ready="+img._ready+";image._ready="+image._ready);
+        ctx.drawImage(image[0], x, y, w, h, 0,0, w, h);
+    }
+	img.Clear = function() { console.log("img.Clear not implemented"); } 
+    img.Update = function() { console.log("img.Update not implemented"); }
+    img.SetAutoUpdate = function( onoff ) { console.log("img.SetAutoUpdate not implemented"); }
+    img.SetName = function( name ) { console.log("img.SetName not implemented"); }
+    img.GetName = function() { console.log("img.GetName not implemented"); return ""; }
     img.SetImage = function( image,width,height,options ) {
-        var newImg=new Image();
-        newImg.src=image;
-        newImg.onload = function() { ctx.drawImage(newImage, 0, 0); }
-    	//img.attr("src", image);
-    	_setSize(img, width?width:w, height?height:h, options);
+//         var newImg=new Image();
+//         newImg.src=image;
+//         newImg.onload = function() { 
+//             //ctx.drawImage(newImage, 0, 0); }
+//             var scaleX = canvas.width/img._initImg.naturalWidth;
+//             var scaleY = canvas.height/img._initImg.naturalHeight;
+//             var scale = scaleX < scaleY ? scaleX : scaleY;
+//             realCtx.drawImage(img._initImg, 0, 0, img._initImg.naturalWidth, img._initImg.naturalHeight, 0,0, img._initImg.naturalWidth*scale, img._initImg.naturalHeight*scale);
+//         
+//         }
+//     	//img.attr("src", image);
+//     	_setSize(img, width?width:w, height?height:h, options);
+        img._initImg=new Image();
+        img._initImg.onload = function() { 
+            var canvas=img[0];
+            var scaleX = canvas.width/img._initImg.naturalWidth;
+            var scaleY = canvas.height/img._initImg.naturalHeight;
+            var scale = scaleX < scaleY ? scaleX : scaleY;
+//             console.log("IMG:drawPhotos: scaleX="+scaleX+",scaleY="+scaleY+"; src="+img._initImg.src);
+//             console.log("IMG:drawPhotos:sw="+canvas.style.width+" WAS "+canvas.width);
+//             console.log("IMG:drawPhotos:sh="+canvas.style.height+" WAS "+canvas.height);
+    
+//             if(canvas.style.width !== "") { canvas.width=parseInt(canvas.style.width); }
+//             else { canvas.style.width=canvas.width+"px"; }
+//             if(canvas.style.height !== "") { canvas.height=parseInt(canvas.style.height); }
+//             else { canvas.style.height=canvas.height+"px"; }
+            if(!width || !height) {
+                var sw=width ? width : scaleX;
+                var sh=height ? height : scaleY;
+                //console.log("IMG:resetting size:drawPhotos: sw="+sw+",sh="+sh+"; src="+img._initImg.src);
+                _setSize(img, sw, sh, options);
+            }
+        
+            //_canvas=canvas;
+            //console.log("IMG:DrawImage:drawPhotos: READY:scale="+scale+";id="+img.attr("id")+";src="+img._initImg.src);
+            if(scale>0) {
+                //_img=img._initImg;
+                //_ctx=realCtx;
+                //console.log("REPLAY drawPhotos LIMG:"+image+";id="+img.attr("id")+";cw="+canvas.width+";ch="+canvas.height+";scale="+scale);
+                realCtx.drawImage(img._initImg, 0, 0, img._initImg.naturalWidth, img._initImg.naturalHeight, 0,0, img._initImg.naturalWidth*scale, img._initImg.naturalHeight*scale);
+                ctx._replay(); // Draw buffered commands after drawing image
+                ctx=realCtx;
+                //_saveCtx=ctx;
+            }
+            //console.log("DrawImage:drawPhotos:READY "+img.attr("id")+";drawq="+img._drawq.length+";"+JSON.stringify(img._drawq));
+            img._ready=true;
+            var i;
+            while(i=img._drawq.shift()) { i._notifyReady(imgId); }
+        }
+        if(image) {
+            img._ready=false; // Are we ready to be drawn?
+            img._initImg.src=image; // Asynchronously load this image
+        }
+        else { img._ready=true; }
+        //console.log("DrawImage:DrawPhotos:_ready="+img._ready+";"+img._initImg.src);
 	}
-	img.GetImage = function() { return img.attr("src"); }
-	img.GetPixelData = function( format,left,top,width,height ) { console.log("GetPixelData not implemented"); return null; }
-    img.SetSize = function( width,height ) { _setSize(img); }
-    img.GetHeight = function() { console.log("GetHeight not implemented"); return 0; }
-    img.GetWidth = function() { console.log("GetWidth not implemented"); return 0; }
-    img.GetAbsHeight = function() { console.log("GetAbsHeight not implemented"); return 0; }
-    img.GetAbsWidth = function() { console.log("GetAbsWidth not implemented"); return 0; } 
-    //img.SetOnTouch = function( callback ) { this.impl.SetOnTouch(callback); } 
-    //img.SetOnTouchUp = function( callback ) { this.impl.SetOnTouchUp(callback); }  
-    //img.SetOnTouchMove = function( callback ) { this.impl.SetOnTouchMove(callback); }
-    //img.SetOnTouchDown = function( callback ) { this.impl.SetOnTouchDown(callback); }
-    img.SetOnTouch = function( callback ) { 
-    	img.mouseup(function() { callback("Up"); }); 
-    	//img.mousedown(function() { callback("Down"); }); 
-    	//img.mousemove(function() { callback("Move"); });
-		img.css("cursor", (callback?"pointer":"auto") );
-    } 
-    img.SetOnTouchUp = function( callback ) { img.mouseup(callback); img.css("cursor",(callback?"pointer":"auto"));  }  
-    img.SetOnTouchMove = function( callback ) { img.mousemove(callback); img.css("cursor",(callback?"pointer":"auto")); }
-    img.SetOnTouchDown = function( callback ) { img.mouseup(callback); img.css("cursor",(callback?"pointer":"auto")); } 
-    img.SetOnLongTouch = function( callback ) { console.log("SetOnLongTouch not implemented"); img.css("cursor",(callback?"pointer":"auto")); }   
-    img.SetTouchable = function( touchable ) { console.log("SetTouchable not implemented"); }
+	img.GetPixelData = function( format,left,top,width,height ) { console.log("img.GetPixelData not implemented"); return null; }
+    img.SetSize = function( width,height ) { this._width=width; this._height=height; _setSize(img); }
+    img.GetHeight = function() { return this._height; }
+    img.GetWidth = function() { return this._width; }
+    img.GetAbsHeight = function() { return this._height; }
+    img.GetAbsWidth = function() { return this._width; } 
+    img.SetOnTouch = function( callback )       { _handleTouchEvent.call(img, img.click, "Down", callback); } 
+    img.SetOnTouchUp = function( callback )     { _handleTouchEvent.call(img, img.mouseup, "Up", callback); }
+    img.SetOnTouchMove = function( callback )   { _handleTouchEvent.call(img, img.mousemove, "Move", callback); }
+    img.SetOnTouchDown = function( callback )   { _handleTouchEvent.call(img, img.mousedown, "Down", callback); } 
+    img.SetOnLongTouch = function( callback )   { _handleTouchEvent.call(img, img.contextmenu, "Context", callback); }   
+    img.SetTouchable = function( touchable ) { img.touchable=touchable; }
  //    img.SetOnLoad = function( callback ) { this.impl.SetOnLoad(callback); }
  //    img.SetMaxRate = function( ms ) { this.impl.SetMaxRate(ms); }
- //    img.DrawImage = function( image,x,y,w,h,angle,mode ) { 
 	// 	if( obj._auto ) this.impl.DrawImage((image?image.impl:null), x, y, w, h, angle, mode); 
 	// 	else this.Draw( "i", (image?image.id:null), x,y,(w?w:-1),(h?h:-1),angle,mode ); }
 	// obj.DrawImageMtx = function( image,matrix ) { 
@@ -547,6 +835,8 @@ function JQueryMobile_Img(file, width, height, options, w, h)
 	// 	if( obj._auto ) this.impl.DrawPoint(x, y); else this.Draw( "p", null, x,y ); }
     img.DrawCircle = function( x,y,radius ) {
         ctx.beginPath();
+        [x,y,radius]=img._scale(x,y,radius);
+        //console.log("DrawCircle: x="+x+",y="+y+",radius="+radius);
         ctx.arc(x, y, radius, 0, 360);
         ctx.stroke();
     }
@@ -554,6 +844,8 @@ function JQueryMobile_Img(file, width, height, options, w, h)
 	// 	if( obj._auto ) this.impl.DrawArc(x1, y1, x2, y2, start, sweep);
 	// 	else this.Draw( "a", null, x1,y1,x2,y2,start,sweep ); }
     img.DrawLine = function( x1,y1,x2,y2 ) { 
+        [x1,y1]=img._scale(x1,y1);
+        [x2,y2]=img._scale(x2,y2);
         ctx.beginPath();
         ctx.moveTo(x1,y1);
         ctx.lineTo(x2,y2);
@@ -564,13 +856,18 @@ function JQueryMobile_Img(file, width, height, options, w, h)
 	// 	else this.Draw( "r", null, x1,y1,x2,y2 ); 
         
     //}
-    img.DrawText = function( txt,x,y ) { ctx.fillText(txt, x, y); }
+    img.DrawText = function( txt,x,y ) { [x,y]=img._scale(x,y); ctx.fillText(txt, x, y); }
     img.SetAlpha = function( alpha ) { img.css("opacity", alpha ); }
-    img.SetColor = function( clr ) { img.css("color", clr); }
-    img.SetTextSize = function( size ) { _textSize=size; ctx.font=_textStyle+" "+_textSize+" "+_textFont; }
+    img.SetColor = function( clr ) { //img.css("color", clr); 
+        ctx.fillStyle=clr;
+        //console.log("drawPhotos:SetColor:width="+this.width()+",height="+this.height()+",clr="+clr);
+        ctx.fillRect(0,0,this.width(),this.height());
+    }
+    img.SetTextSize = function( size ) { img._textSize=(size)+"pt"; ctx.font=img._textStyle+" "+img._textSize+" "+img._textFont; }
  //    obj.SetFontFile = function( file ) { if( obj._auto ) this.impl.SetFontFile(file); else this.Draw( "f",file ); }  
     img.SetLineWidth = function( width ) { ctx.lineWidth=width;  }
-    img.SetPaintColor = function( clr ) { _paintColor=clr; }
+    img.SetBackColor = function( clr ) { img._backColor=clr; ctx.fillStyle=img._backColor; }
+    img.SetPaintColor = function( clr ) { img._paintColor=clr; ctx.fillStyle=ctx.strokeStyle=img._paintColor; }
  //    obj.SetPaintStyle = function( style ) { if( obj._auto ) this.impl.SetPaintStyle(style); else this.Draw( "s",style ); } 
  //    obj.Rotate = function( angle,pivX,pivY ) { this.impl.Rotate(angle, pivX, pivY); }
  //    obj.Move = function( x,y ) { this.impl.Move(x, y); }
@@ -578,12 +875,15 @@ function JQueryMobile_Img(file, width, height, options, w, h)
  //    obj.Skew = function( x,y ) { this.impl.Skew(x, y); }
  //    obj.Transform = function( matrix ) { this.impl.Transform(matrix); }
  //    obj.Reset = function() { this.impl.Reset(); }
- //    obj.Save = function( fileName,quality ) { this.impl.Save(fileName, quality); }
+    img.Save = function( fileName,quality ) { 
+        console.log("ERROR: img.Save NOT IMPLEMENTED!: "+fileName+",quality="+quality);
+    };
  //    obj.Draw = function( func, p1, p2, p3, p4, p5, p6, p7 ) {
 	// 	if( obj._gfb.length > 2 ) obj._gfb += "\f";
 	// 	obj._gfb += func + "¬" + p1 + "¬" + p2 + "¬" + p3 + "¬" + p4 + "¬" + p5 + "¬" + p6 + "¬" + p7;
 	// }
 
+    img.SetImage(file, width, height, options);
 	return img;
 }
 
@@ -598,8 +898,10 @@ function JQueryMobile_Btn(title, width, height, options)
 		fileInput = $("<input type=\"filepicker\" data-fp-apikey=\"A1KC38flRmucYlZyZRVLLz\" data-fp-mimetypes=\"image/*\" data-fp-container=\"modal\" data-fp-maxsize=\"300000\" data-fp-services=\"COMPUTER,DROPBOX,FACEBOOK,GOOGLE_DRIVE,INSTAGRAM,IMAGE_SEARCH,WEBCAM\" onchange=\"alert(event.fpfile.url)\">");
 		button.append( fileInput );
 	}
-	else button = $("<a href=\"#\" class=\"ui-btn ui-shadow ui-btn-inline ui-corner-all no-mXargin\">" + title + "</a>");
+	//else button = $("<a href=\"#\" class=\"ui-btn ui-shadow ui-btn-inline ui-corner-all no-mXargin\">" + title + "</a>");
+	else button = $("<a href=\"#\" class=\" ui-btn2\">" + title + "</a>");
 	_initObj(button);
+	button.attr("id", "btn" + (++_jqmId));
 
 	_setSize(button, width, height, options);
 	if(options.indexOf("mini") >= 0) button.addClass("ui-mini");
@@ -641,6 +943,7 @@ function JQueryMobile_Chk(text, width, height, options)
 	checkbox.append("<input type=\"checkbox\">" + text);
 	checkbox.css("margin", 0);
 	_initObj(checkbox);
+	checkbox.attr("id", "chk" + (++_jqmId));
 
 	_setSize(checkbox, width, height, options);
 
@@ -665,9 +968,16 @@ function JQueryMobile_Txt(text, width, height, options)
 	options = options ? options.toLowerCase() : "";
 	
 	var txt = $("<div></div>");
+    txt.attr("class", "txt");
 	_initObj(txt);
+	txt.attr("id", "txt" + (++_jqmId));
 	_setSize(txt, width, height, options);
 
+    // Handle FontAwesome
+    if(text.indexOf('[fa-') > -1) {
+        text=text.replace(/\[(fa\-[a-z][a-z][a-z\-]*)\]/g,'<span class="fas $1"></span>');
+        options += ",html";
+    }
 		
 	if(options.indexOf("html") >= 0) txt.html( text );
 	else txt.text( text );
@@ -679,6 +989,7 @@ function JQueryMobile_Txt(text, width, height, options)
 	if( options.indexOf("multiline") > -1) txt.css( "white-space", "normal" );
 	if( options.indexOf("bold") > -1 ) txt.css( "font-weight", "600" );
 
+    txt.touchable=false; // by default
 	txt.SetText = function( text ) { txt.text(text); }  
     txt.SetHtml = function( html ) { txt.html(html); } 
     txt.Log = function( msg,options ) { console.log("Log not implemented"); } 
@@ -694,17 +1005,14 @@ function JQueryMobile_Txt(text, width, height, options)
     txt.GetLineStart = function( line ) { console.log("GetLineStart not implemented"); return 0; }  
     txt.SetEllipsize = function( mode ) { console.log("SetEllipsize not implemented"); return 0; } 
     txt.SetTextShadow = function( radius,dx,dy,color ) { console.log("SetTextShadow not implemented"); return 0; }   
-    txt.SetOnTouch = function( callback ) { 
-        txt[0].onclick=function() { callback(); return false; }; // Needed to prevent default link action.  Apparently using mouseup doesn't return callback value.
-    	//txt.mouseup(callback); 
-    	//txt.mousedown(function() { callback("Down"); }); 
-    	//txt.mousemove(function() { callback("Move"); });
-    } 
-    txt.SetOnTouchUp = function( callback ) { txt.mouseup(callback); }  
-    txt.SetOnTouchMove = function( callback ) { txt.mousemove(callback); }
-    txt.SetOnTouchDown = function( callback ) { txt.mousedown(callback); } 
-    txt.SetOnLongTouch = function( callback ) { console.log("SetOnLongTouch not implemented"); }   
-    txt.SetTouchable = function( touchable ) { console.log("SetTouchable not implemented"); }
+    
+    txt.SetTouchable = function( touchable ) { txt.touchable=touchable; }
+    
+    txt.SetOnTouch = function( callback )       { _handleTouchEvent.call(txt, txt.click, "Down", callback); } 
+    txt.SetOnTouchUp = function( callback )     { _handleTouchEvent.call(txt, txt.mouseup, "Up", callback); }
+    txt.SetOnTouchMove = function( callback )   { _handleTouchEvent.call(txt, txt.mousemove, "Move", callback); }
+    txt.SetOnTouchDown = function( callback )   { _handleTouchEvent.call(txt, txt.mousedown, "Down", callback); } 
+    txt.SetOnLongTouch = function( callback )   { _handleTouchEvent.call(txt, txt.contextmenu, "Context", callback); }   
 
 	return txt;
 }
@@ -727,6 +1035,7 @@ function JQueryMobile_Txe(text, width, height, options)
 		txe = txeInput = $("<textarea class=\"ui-input-text ui-body-c ui-corner-all ui-shXadow-inset\">"+text+"</textarea>");
 	}
 	_initObj(txe);
+	txe.attr("id", "txe" + (++_jqmId));
 	_setSize(txe, width, height, options);
 
 	if(options.indexOf("password") > -1)
@@ -751,11 +1060,7 @@ function JQueryMobile_Txe(text, width, height, options)
     txe.GetMaxLines = function() { console.log("GetMaxLines not implemented"); return 0; }   
     txe.GetLineTop = function( line ) { console.log("GetLineTop not implemented"); return 0; }   
     txe.GetLineStart = function( line ) { console.log("GetLineStart not implemented"); return 0; }  
-    txe.SetOnTouch = function( callback ) { 
-    	txe.mouseup(function() { callback("Up"); }); 
-    	txe.mousedown(function() { callback("Down"); }); 
-    	txe.mousemove(function() { callback("Move"); });
-    };  
+   	txe.SetOnTouch = function( callback ) { txe.click(callback); }
     txe.InsertText = function( text,start,end ) { console.log("InsertText not implemented"); }  
     txe.ReplaceText = function( text,start,end ) { console.log("ReplaceText not implemented"); }  
     txe.SetOnChange = function( callback ) { txe.onChangeCallback = callback; }  
@@ -779,6 +1084,7 @@ function JQueryMobile_Spn(list, width, height, options)
 	var spnSelect = $("<select>");
 	spn.append(spnSelect);
 	_initObj(spn);
+	spn.attr("id", "spn" + (++_jqmId));
 	_setSize(spn, width, height, options);
 
 	function setList(list, delim)
@@ -809,7 +1115,7 @@ function JQueryMobile_Spn(list, width, height, options)
 		spnSelect.selectmenu();
 	}
 
-	spn.SetOnTouch = function( callback ) { console.log("SetOnTouch not implemented"); }
+   	spn.SetOnTouch = function( callback ) { spn.click(callback); }
     spn.SetOnChange = function( callback ) { spn.onChangeCallback = callback; }
     spn.SetText = function( txt ) { spnSelect.val(txt).selectmenu('refresh'); }   
     spn.SelectItem = function( item ) { spnSelect.val(txt).selectmenu('refresh'); }   
@@ -843,6 +1149,7 @@ function JQueryMobile_Lst(list, width, height, options)
 	
 	//Init base object and set size.
 	_initObj(lst);
+	lst.attr("id", "lst" + (++_jqmId));
 	_setSize(lst, width, height, options);
 	
 	var listItems = [];
@@ -913,8 +1220,9 @@ function JQueryMobile_Lst(list, width, height, options)
 			else
 				itemContent = $("<a href=\"#\" xclass=\"ui-nodisc-icon\">");
 
-			item.append(itemContent);
+// 			item.append(itemContent); BELOW NOW
 			
+            
 			if( options.indexOf("cards")>-1 ) {
 				if( !cards2 ) itemContent.append("<h1 style='width:"+(w-20)+"px'>" + itemData.title + "</h1>");
 			}
@@ -933,6 +1241,8 @@ function JQueryMobile_Lst(list, width, height, options)
 				itemContent.append( content );
 			}
 
+			item.append(itemContent);
+			
 			item.data("itemData", itemData);
 			item.click(function() 
 			{ 
@@ -974,6 +1284,8 @@ function JQueryMobile_Lst(list, width, height, options)
 	}
 
 	lst.listview();
+    
+    lst.attr("id", "lst" + (++_jqmId));
 
 	setList(list, ",");
 
@@ -1002,7 +1314,8 @@ function JQueryMobile_Lst(list, width, height, options)
     lst.GetLength = function() { console.log("GetLength not implemented"); return 0; }
     lst.ScrollToItem = function( title,body ) { console.log("ScrollToItem not implemented"); }
     lst.ScrollToItemByIndex = function( index ) { console.log("ScrollToItemByIndex not implemented"); }
-    lst.SetOnTouch = function( callback ) { this.onTouchCallback = callback; }    
+    
+   	lst.SetOnTouch = function( callback ) { this.onTouchCallback = callback; lst.click(callback); }
     lst.SetOnLongTouch = function( callback ) { this.onLongTouchCallback = callback; }    
 	lst.SetBackColor = function( clr ) { backCol = clr; if( useCards ) lst.css( "background-color", clr ); else lst.children().children().css( "background-color", clr );} 
     lst.SetTextColor1 = function( clr ) { lst.children().children().children().css( "color", clr ); } 
@@ -1122,7 +1435,8 @@ function JQueryMobile_Bar(title, buttons)
 	cboFlags.find("select").append( $('<option value="FR" data-icon="flags/FR.png">FR</option>') ); 
 	cboFlags.find("select").append( $('<option value="IT" data-icon="flags/IT.png">IT</option>') ); 
 	cboFlags.find("select").append( $('<option value="CH" data-icon="flags/CH.png">CH</option>') );
-	
+    
+    actionBar.attr("id", "bar" + (++_jqmId));
 	
 	var leftActionButtons = $("<div class=\"ui-btn-left\">");
 	var rightActionButtons = $("<div class=\"ui-btn-right\">");
@@ -1172,9 +1486,7 @@ function JQueryMobile_Bar(title, buttons)
 		actionBar.toolbar("hide");
 	};
 
-	actionBar.SetOnTouch = function(callback) {
-		actionBar.callback = callback;
-	};
+   	actionBar.SetOnTouch = function( callback ) { actionBar.callback = callback; actionBar.click(callback); }
 	
 	actionBar.SetTitle = function( title ) {
 		mainTitle.text( title );
@@ -1254,10 +1566,11 @@ function JQueryMobile_Dlg(title, options)
 	dlg.append(dlgContent);
 
 	_initObj(dlg);
+    dlg.attr("id", "dlg" + (++_jqmId));
 
 	dlg.css("min-width", "300px");
 
-    dlg.SetOnTouch = function( callback ) { console.log("SetOnTouch not implemented"); }
+   	dlg.SetOnTouch = function( callback ) { dlg.callback = callback; dlg.click(callback); }
     dlg.AddLayout = function( layout ) { dlgContent.append(layout); }	
 	dlg.RemoveLayout = function( layout ) { layout.remove(); }	
 	dlg.Show = function() { dlg.popup("open"); }
@@ -1290,15 +1603,60 @@ function JQueryMobile_LstDlg(title, list, options)
 	dlgContent.append(lstLay);
 
 	_initSObj(dlg);
+    dlg.attr("id", "ldg" + (++_jqmId));
 
 	dlg.css("min-width", "250px");
 
-    dlg.SetOnTouch = function( callback ) { dlg.callback = callback }
+    dlg.SetOnTouch = function( callback ) { dlg.callback = callback; lst.SetOnTouch(function(ev) {
+        console.log("Touched, ready to hide");
+        dlg.Hide();
+        callback(ev);
+    }
+    ); }
 	dlg.SetTextColor = function( clr ) { dlg.css("color", clr); } //console.log("SetTextColor not implemented"); } 
 	dlg.SetBackColor = function( clr ) { dlg.css("background", clr); } //console.log("SetBackColor not implemented"); } 
 	dlg.SetSize = function( width,height,options ) { console.log("SetSize not implemented"); }
+    dlg.Show = function() {
+        function _reshow() {
+            if(window.getComputedStyle(this[0]).visibility === "hidden") {
+                var d=new Date();
+                if(d.valueOf() - this._firstShow > 10000) {
+                    console.log(d+": Dialog still not opened after 10 seconds");
+                }
+                this.popup("open");
+                setTimeout(_reshow.bind(this), 200);
+            }
+            else {
+                _center.call(this, dlg);
+                setTimeout(function() { _center.call(this,dlg); }.bind(this),200); // Width seems to be changing dynamically so we need to re-center
+            }
+        };
+        dlg._firstShow=new Date().valueOf();
+        dlg[0].style.zIndex=9999; // Bring to front
+        _reshow.call(dlg); // Repeatedly try to show until successful
+        
+
+        //console.log("dlg.Show1"); setTimeout(() => { console.log("dlg.Show2"); dlg.popup("open"); },2000); 
+        //alert("height="+dlg.css("height")+";width="+dlg.css("width")+",_w="+_w+",_h="+_h+";top="+top+",left="+left);
+    }
+    dlg.Hide = function() { 
+        console.log("dlg.Hide"); 
+        dlg.popup("close"); 
+        dlg[0].style.zIndex=-1; 
+        dlg[0].visibility="hidden";
+    }
     
     return dlg;
+}
+
+function _center(dlg) {
+    //alert("width="+window.getComputedStyle(this[0]).width);
+    var width=parseInt(window.getComputedStyle(this[0]).width);
+    var height=parseInt(window.getComputedStyle(this[0]).height);
+    //var width=parseInt(dlg.css("width"));
+    //var height=parseInt(dlg.css("height"));
+    var top=(_h-height)/2,left=(_w-width)/2;
+    dlg.css({position:"absolute",top:top+"px",left:left+"px"});
 }
 
 function JQueryMobile_Ynd( msg )
@@ -1332,10 +1690,11 @@ function JQueryMobile_Ynd( msg )
 	dlgContent.append(btnLay);
 
 	_initSObj(dlg);
+    ynd.attr("id", "ynd" + (++_jqmId));
 
 	dlg.css("min-width", "250px");
 
-    dlg.SetOnTouch = function( callback ) { dlg.callback = callback }
+   	dlg.SetOnTouch = function( callback ) { dlg.callback = callback; dlg.click(callback); }
 	dlg.SetBackColor = function( clr ) { console.log("SetBackColor not implemented"); } 
 	dlg.SetSize = function( width,height,options ) { console.log("SetSize not implemented"); }
     
@@ -1350,14 +1709,15 @@ function JQueryMobile_Map(key, width, height, options)
 	var map = $("<div>");
 	map.attr("id", id);
 	_initObj(map);
+	map.attr("id", "map" + (++_jqmId));
 	_setSize(map, width, height, options);
 
-	// if(width && width !== -1)
+	// if(width && width > -1)
 	// {
 	// 	map.css("width", (width * _w) + "px");
 	// }
 
-	// if(height && height !== -1)
+	// if(height && height > -1)
 	// {
 	// 	map.css("height", (height * _h) + "px");
 	// }
@@ -1492,6 +1852,7 @@ function JQueryMobile_Map(key, width, height, options)
 	};
 
 	map.SetOnTouchMarker = function(callback) {
+        console.log("map.SetOnTouchMarker not implemented");
 		map.onTouchMarker = callback;
 	};
 
@@ -1566,11 +1927,13 @@ function JQueryMobile_Service(packageName, className, options, callback)
     this.packageName=packageName;
     this.className=className;
     this.onMessage=function() { };
-    if(!callback) { this.onMessage=options; this.options=""; }
-    else { this.options=options; this.onMessage=callback; }
-	this.SetOnMessage = function(callback) { this.onMessage=callback; }
+    if(!callback) { this.onReady=options?options:function() {}; this.options=""; }
+    else { this.options=options; this.onReady=callback; }
+	this.SetOnMessage = function(obj, callback) { this.onMessage=callback; }
 	this.SendMsg = function(obj, msg) {
-        client.send(JSON.stringify({"type":"cmd", "cmd":"SendService", "id":obj.id, "msg":msg}));
+        if(!msg) { msg=null; }
+        else if(typeof msg === 'string') { msg=JSON.stringify(msg); } //'"'+msg+'"'; } // Old method failed with double quotes
+        client.send('{"type":"cmd", "cmd":"SendService", "id":'+obj.id+', "msg":'+msg+'}'); // msg is already stringified
     };
 	this.Stop = function(obj) {
         client.send(JSON.stringify({"type":"cmd", "cmd":"StopService", "id":obj.id}));
@@ -1584,6 +1947,7 @@ function JQueryMobile_Service(packageName, className, options, callback)
     this.Start = function(obj) {    
         client.send(JSON.stringify({"type":"cmd", "cmd":"StartService", "id":obj.id, "packageName":this.packageName, "className":this.className, "options":this.options}));
     }
+    _currentService=this;
 }
 
 function _initObj(element)
@@ -1591,19 +1955,90 @@ function _initObj(element)
 	element.Destroy = function() { this.remove(); } 
     element.Release = function() { this.remove(); }        
     element.SetVisibility = function( mode ) { if(mode.toLowerCase().indexOf("show")>-1) this.show(); else this.hide(); }    
+    // FIXME: dialog show() not working:
+    // FIXME: display â†’ "inline-block", "text-align" â†’ "center", "white-space" â†’ "nowrap", "overflow-x" â†’ "hidden", "overflow-y" â†’ "hidden", width â†’ "40vw", height â†’ "72vh", "background-color" â†’ "rgb(221, 238, 255)", left â†’ "2.5vw", top â†’ "2vh", â€¦ 
     element.GetVisibility = function() { return this.is(":visible"); }   
-    element.SetPadding = function( left,top,right,bottom ) { this.css("padding", _toPixelHeight(top) + " " + _toPixelWidth(right) + " " + _toPixelHeight(bottom) + " " + _toPixelWidth(left)); }
-    element.SetMargins = function( left,top,right,bottom ) { this.css("margin", _toPixelHeight(top) + " " + _toPixelWidth(right) + " " + _toPixelHeight(bottom) + " " + _toPixelWidth(left)); }
+    element.SetPadding = function( left,top,right,bottom ) { this.css("padding", _toViewportHeight(top) + " " + _toViewportWidth(right) + " " + _toViewportHeight(bottom) + " " + _toViewportWidth(left)); }
+    element.SetMargins = function( left,top,right,bottom ) { this.css("margin", _toViewportHeight(top) + " " + _toViewportWidth(right) + " " + _toViewportHeight(bottom) + " " + _toViewportWidth(left)); }
     element.SetBackground = function( file,options ) { 
         if(!options) options="";
 		this.css("background-image", "url("+file+")"); 
 		if(options.indexOf("repeat")==-1) this.css("background-size", "100% 100%" ); 
 		else this.css("background-repeat","repeat"); 
 	}
-    element.SetBackColor = function( clr ) { this.css("background-color", clr); }  
-    element.SetBackGradient = function( colour1,colour2,colour3,options ) { console.log( "SetBackGradient not implemented" ); }  
-    element.SetBackGradientRadial = function( x,y,radius,colour1,colour2,colour3,options ) { console.log( "SetBackGradientRadial not implemented" ); }  
-    element.SetPosition = function( left,top,width,height,options ) { console.log( "SetPosition not implemented" ); }
+    element.SetBackColor = function( clr ) { this.css("background-color", _fixColor(clr)); }  
+    element.SetBackGradient = function( colour1,colour2,colour3,options ) { 
+        //console.log( "SetBackGradient not implemented" ); 
+        var dir="to bottom, ";
+        if(options) {
+            if(options == "bottom-top") { dir="to top, "; }
+            else if(options == "top-bottom") { dir="to bottom, "; }
+            else if(options == "left-right") { dir="to right, "; }
+            else if(options == "right-left") { dir="to left, "; }
+        }
+        var gr="linear-gradient("+dir+_fixColor(colour1)+","+_fixColor(colour2)+(colour3?","+_fixColor(colour3):"")+")";
+        this.css("background", gr);
+    }
+    element.SetBackGradientRadial = function( x,y,radius,colour1,colour2,colour3,options ) {
+        console.log( "SetBackGradientRadial radius,options ignored" ); 
+        if(typeof y === 'number') this.css("height", y);
+        if(typeof x === 'number') this.css("width", x);
+        this.css("background", "radial-gradient("+colour1+","+colour2+(colour3?","+colour3:"")+")");
+    }
+    element.SetPosition = function( left,top,width,height,options ) { 
+        /*
+         * function getPosition( element ) {
+                var rect = element.getBoundingClientRect();
+                return {x:rect.left,y:rect.top};
+                }
+
+                works in all browsers :) .. use it like this
+
+                var el = document.getElementById( 'myElement' );
+                var pos = getPosition( el );
+                alert( pos.x ); alert( pos.y );
+                
+------------------------------------------
+
+
+                The correct approach is to use element.getBoundingClientRect():
+
+                var rect = element.getBoundingClientRect();
+                console.log(rect.top, rect.right, rect.bottom, rect.left);
+
+                Internet Explorer has supported this since as long as you are likely to care about and it was finally standardized in CSSOM Views. All other browsers adopted it a long time ago.
+
+                Some browsers also return height and width properties, though this is non-standard. If you're worried about older browser compatibility, check this answer's revisions for an optimised degrading implementation.
+
+                The values returned by element.getBoundingClientRect() are relative to the viewport. If you need it relative to another element, simply subtract one rectangle from the other:
+
+                var bodyRect = document.body.getBoundingClientRect(),
+                    elemRect = element.getBoundingClientRect(),
+                    offset   = elemRect.top - bodyRect.top;
+
+                alert('Element is ' + offset + ' vertical pixels from <body>');
+--------------------------------------------
+                function getOffset(el) {
+                const rect = el.getBoundingClientRect();
+                return {
+                    left: rect.left + window.scrollX,
+                    top: rect.top + window.scrollY
+                };
+                }
+
+                Using this we can call
+
+                getOffset(element).left
+
+                or
+
+                getOffset(element).top
+
+         * */
+        
+        this.css("position", "absolute");
+        _SetPosition(this[0], left,top,width,height);
+    }
     element.SetSize = function( width,height,options ) { _setSize(this, width, height,options); }
     element.GetWidth = function( options ) { return this.width(); }  
     element.GetHeight = function( options ) { return this.height(); }   
@@ -1612,10 +2047,45 @@ function _initObj(element)
     element.GetLeft = function( options ) { return this.position().left; }  
     element.GetTop = function( options ) { return this.position().top; }   
     element.GetPosition = function( options ) { return this.position(); } 
-    element.SetScale = function( x,y ) { console.log( "SetScale not implemented" ); }
+    element.SetScale = function( x,y ) { 
+        //console.log( "SetScale not implemented" ); 
+        this.css("transform", "scale("+x+", "+y+")");
+    }
     element.Focus = function() { this.focus(); }
 	
 	element._Redraw = function() { _redraw( this ); } 
+}
+
+function _SetPosition(hElem,left,top,width,height) { // Set fractional (0 to 1) position/size on HTML element
+    var par=hElem.parentElement;
+    var px=par?par.offsetLeft/_w:0;
+    var py=par?par.offsetTop/_h:0; 
+    // NOTE: If any ancestor is a scroller, then position relative to top, not to parent offset
+    //console.log("el="+hElem.id+" POSITIONING to x="+left+",y="+top);
+    for(var el=hElem; el && el.id.indexOf('scr') !== 0; el=el.parentElement) { 
+        if(hElem.id == "lay29") { console.log("el="+(el?el.id:"(null)")+" FINDING PARENT for POS"); }
+    }
+    if(px>0 || py>0) { console.log("POS el="+(el?el.id:"(null)")+";px="+px+";py="+py+"\n"); }
+    if(el) { px=py=0; } // If ancestor was a scroller, position from top
+    if(typeof left === 'number')   hElem.style.left   =((px+left)*100)+"vw";
+    if(typeof top === 'number')    { hElem.style.top    =((py+top) *100)+"vh"; console.log("POS top="+hElem.style.top); }
+    if(typeof height === 'number') hElem.style.height =(height   *100)+"vh";
+    if(typeof width === 'number')  hElem.style.width  =(width    *100)+"vw";
+}
+
+function _fixColor(clr) {
+    clr=clr?clr.toLowerCase():"black";
+    if(clr == "green") { clr="#0F0"; }
+    return _RGBA(clr);
+}
+
+function _RGBA(hexARGB) {
+    if(!hexARGB) { return 'black'; }
+    if(hexARGB[0] !== '#' || hexARGB.length < 9) { return hexARGB; }
+    var A=(parseInt(hexARGB.substring(1,3),16)/255).toFixed(2);
+    return 'rgba('+parseInt(hexARGB.substring(3,5),16)+','+
+        parseInt(hexARGB.substring(5,7),16)+','+
+        parseInt(hexARGB.substring(7,9),16)+','+A+')';
 }
 
 function _initSObj(element)
@@ -1626,14 +2096,20 @@ function _initSObj(element)
 
 function _toPixelWidth(fraction)
 {
-	var ret = Math.round(fraction * _w) + "px";
-	//console.log( "_toPixelWidth fract=" + fraction + "  _w=" + _w + " _--> " + ret );
-	return ret;
+	return Math.round(fraction * _w) + "px";
 }
 
 function _toPixelHeight(fraction)
 {
 	return Math.round(fraction * _h) + "px";
+}
+
+function _toViewportWidth(fraction) {
+    return (fraction * 100) + "vw";
+}
+
+function _toViewportHeight(fraction) {
+    return (fraction * 100) + "vh";
 }
 
 function _setSize(element, width, height, options)
@@ -1659,13 +2135,25 @@ function _setSize(element, width, height, options)
 		element.css("height", "100%");
 		//element.css("height", element.parent.height );
 		
-	if(width && width !== -1 ) {
-		//console.log( "Setting "+ element._id + " width to: " + _toPixelWidth(width) );
-		element.css("width", _toPixelWidth(width));
+    var fact=1;
+    var id=element.attr?element.attr("id"):"";
+    var isImg=false,isTxt=false;
+    if(id && id.indexOf('btn') == 0) { fact=0.99; }
+    if(id && id.indexOf('img') == 0) { isImg=true; }
+    if(id && id.indexOf('txt') == 0) { isTxt=true; }
+	if(width && width > -1 ) {
+        var pw=isImg ? _toPixelWidth(width) : _toViewportWidth(width*fact);
+		element.css("width", pw);
+        element[0].width=isImg ? parseInt(pw) : pw;
 	}
 
-	if(height && height !== -1 )
-		element.css("height", _toPixelHeight(height));
+	if(height && height > -1 ) {
+        var ph=isImg ? _toPixelHeight(height) : _toViewportHeight(height*fact);
+		element.css("height", ph);
+        element[0].height=isImg ? parseInt(ph) : ph;
+        if(fact < 1 || isTxt) { element.css("line-height", ph); }
+    }
+    //if(height < -1) { throw new Error("Invalid height="+height+"; id="+element.attr("id")); }
 }
 
 function _redraw( element )
@@ -1706,6 +2194,9 @@ function _initWebSock() {
     var port=window.location.port;
     //host='192.168.201.1';
     //port=81;
+    if(port == 8444) { port = 8082; } // FIXME
+    //var proto='ws://';
+    //if(port == 8444) { proto='wss://'; } // FIXME: WE can't handle sockets over SSL.  But newer browsers won't handle mixed content (non-SSL socket from SSL page)
     var wsurl='ws://'+host+':'+port+window.location.pathname;
     console.log('CON '+wsurl);
     var proto='droidscript-sync';
@@ -1719,6 +2210,10 @@ function _initWebSock() {
     };
     
     client.onopen = function() {
+        console.log('CON open');
+        if(!_started) { _initApp(); }
+
+        
         _loadProgress(97+': WebSocket Connected', 'Synchronizing...');
         if (client.readyState === client.OPEN) {
         }
@@ -1761,8 +2256,13 @@ function _initWebSock() {
             //alert('data='+e.data);
             //console.log('data='+e.data);
             var msg=JSON.parse(e.data);
-            if(msg.type == "sync") { _Sync(msg); }
-            if(msg.type == "syncdone" || msg.type == "syncerr") { 
+            if(msg.type == "sync") {
+                if(!_started) {
+                    window.appLoaded=true;
+                    if(window.appCached) { _initApp(); }
+                }
+            }
+            else if(msg.type == "syncdone" || msg.type == "syncerr") { 
                 if(msg.type == "syncerr") {
                     console.log("SERVER ERROR: "+msg.err); 
                     client.send(JSON.stringify({"type":"sync"})); // Continue sync from server
@@ -1770,8 +2270,26 @@ function _initWebSock() {
 console.log("Sync Done.  init?");
                 if(!_started) { _initApp(); }
             }
-            if(msg.type == "service") {
+            else if(msg.type == "service") {
                 console.log("SERVICE "+msg.service);
+            }
+            else if(msg.type == "cmd") { // "_DroidScript_Fn":"SendMessage", "data":msg
+                var fn=msg.data._DroidScript_Fn;
+                var d=msg.data.data;
+                //console.log("fn="+fn+"; data="+d+"; options="+msg.data.options);
+                switch(fn) {
+                    case "SendMessage": _currentService.onMessage(d); break;
+                    case "ShowPopup":   app.ShowPopup(d, msg.data.options); break;
+                    default: console.log("fn="+fn+"; data="+d+"; options="+msg.data.options); break;
+                }
+            }
+            else if(msg.type == "ServiceReady") {
+                console.log("ServiceReady: id="+msg.id);
+                var fn=__idMap[msg.id].impl.onReady;
+                if(typeof fn == 'function') { fn(); }
+            }
+            else {
+                console.log('Received message with type '+msg.type+': '+e.data);
             }
         }
         else {
@@ -1783,20 +2301,27 @@ console.log("Sync Done.  init?");
 
 function _initApp() {
     _started=true; 
-console.log('_initApp#1: type:'+(typeof OnStart));
+//console.log('_initApp#1: type:'+(typeof OnStart));
     if(typeof OnStart === 'function') { 
-console.log('_initApp#2');
+//console.log('_initApp#2');
         _loadProgress(98);
         //OnStart=syncify.revert(OnStart);
         //OnStart( (ret) => { throw ret; } ); //console.log("OnStart="+ret); } );
+        var backColor="#111";
+        ids=['_pageBody','pageMain','contentMain'];
+        for(id in ids) { 
+            console.log(ids[id]); 
+            document.getElementById(ids[id]).style.backgroundColor=backColor;
+        }
         OnStart();
         _loadProgress(99);
-console.log('_initApp#3');
+//console.log('_initApp#3');
     }
-console.log('_initApp#4');
+//console.log('_initApp#4');
 }
 
 function _Sync(msg) { // Sync with null msg when client file changes (write/metadata)
+    console.log("_Sync: path="+msg.path);
     //console.log("path: "+tree.path+" lastModified="+tree.lastModified);
     var ref=_retrieveFile(msg.path);
     if(msg && (!ref || ref.lastModified < msg.lastModified || !ref.data)) { // FIXME: Check for EITHER localStorage data OR Chrome api
@@ -1821,6 +2346,7 @@ function _Sync(msg) { // Sync with null msg when client file changes (write/meta
 
 function _storeFile(obj, data, blob) { // Input 'data' must be as a data URI or null if not storing data (e.g. for files to get from browser cache)
     // FIXME: Set EITHER localStorage or Chrome data, not both
+    console.log("_storeFile: path="+obj.path+"; stack="+new Error().stack);
     var id='FILE:'+obj.path;
     // NOTE: Possibly need to update parent directory (if this was a newly created file)
     var spl=obj.path.split('/');
@@ -1852,6 +2378,7 @@ function _storeFile(obj, data, blob) { // Input 'data' must be as a data URI or 
 }
 
 function _createDirWithFilenames(path, filenames) { // Input array of filenames
+    console.log("_createDirWithFilenames: path="+path);
     var ctype="inode/directory";
     var blob=new Blob([JSON.stringify(filenames)],{type:ctype});
     var data=_blobToDataURL(blob);
@@ -1859,7 +2386,7 @@ function _createDirWithFilenames(path, filenames) { // Input array of filenames
     _storeFile(msg, data, blob);
 }
 
-var _fetchFileSync = syncify( (path, done) => {
+/*var _fetchFileSync = syncify( (path, done) => {
     var xhr = new XMLHttpRequest(); 
     xhr.open("GET", path); 
     xhr.responseType = "blob"; // force the HTTP response, response-type header to be blob
@@ -1878,7 +2405,7 @@ var _fetchFileSync = syncify( (path, done) => {
     }
     xhr.send()
 });
-
+*/
 function _retrieveFolder(path)  {
     var req = new XMLHttpRequest();
     req.open('GET', path, false);
@@ -2144,7 +2671,302 @@ function _WebSock( id, ip, port, options )
    }
    return this;
 }
+function _retrieveFolder(path)  {
+    var req = new XMLHttpRequest();
+    req.open('GET', path, false);
+    req.send(null);
+    if (req.status != 200) return null;
+    var ctype=req.getResponseHeader('content-type');
+    if(ctype != 'inode/directory') { return null; }
+    return req.responseText;
+}
+
+function _retrieveFile(path) {
+    var id='FILE:'+path;
+    var ref=_files[id];
+    if(ref) { return ref; }
+        
+    ref=localStorage[id];
+    if(!ref) { 
+        if(path.indexOf('sample3.js') > -1) console.log("FILE "+path+" not found.");
+        return null; }
+    if(path.indexOf('sample3.js') > -1) { console.log("_retrieveFile: "+path); }
+    
+    try {
+        var obj=JSON.parse(ref);
+        var blob=obj.data ? _dataURItoBlob(obj.data) : new Blob([],{type:obj.type});
+        var file=_blobToFile(blob, path, obj.lastModified);
+        file.data=obj.data;
+        _files[id]=file;
+        return file;    // NOTE: File contents cannot be taken from this unless it is type: inode/directory
+                        // NOTE: Regular files are too large to store as a dataURI in localStorage.  Instead,
+                        // NOTE: we must
+    }
+    catch(e) {
+        console.log("ERROR: "+e.stack+"\nref="+ref);
+        throw e;
+    }
+}
+
+function _blobToFile(blob, name, lastModified) {
+    if(!lastModified) { lastModified=Date.now(); }
+    try { return new File([blob], name, {type:blob.type, lastModified:lastModified}); }
+    catch(e) {
+        var f=new Blob([blob], {type:blob.type});
+        f.name=name;
+        f.lastModified=lastModified;
+        f.lastModifiedDate=new Date(f.lastModified);
+        return f;
+    }
+}
+
+function _fetchBlob(uri, done) { // Returns a blob as a data url (as well as original blob)
+    var xhr = new XMLHttpRequest(); 
+    xhr.open("GET", uri); 
+    xhr.responseType = "blob"; // force the HTTP response, response-type header to be blob
+    xhr.onload = () => {
+        var blob = xhr.response;
+        var reader = new FileReader();
+        reader.onload = ( (self) => {
+            return (e) => { done(e.target.result, blob); }
+        })(this);
+        reader.readAsDataURL(blob);
+    }
+    xhr.send()
+}
+
+function _fetchBlobOnly(uri, done) { // Returns a blob asynchronously
+    var xhr = new XMLHttpRequest(); 
+    xhr.open("GET", uri); 
+    xhr.responseType = "blob"; // force the HTTP response, response-type header to be blob
+    xhr.onload = () => {
+        var blob = xhr.response;
+        done(blob);
+    }
+    xhr.send()
+}
+
+function _dataURItoBlob(dataURI) {
+    // convert base64/URLEncoded data component to raw binary data held in a string
+    var byteString;
+    if (dataURI.split(',')[0].indexOf('base64') >= 0)
+        byteString = atob(dataURI.split(',')[1]);
+    else
+        byteString = unescape(dataURI.split(',')[1]);
+
+    //console.log("dataURI="+dataURI+"***");
+    // separate out the mime component
+    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+    // write the bytes of the string to a typed array
+    var ia = new Uint8Array(byteString.length);
+    for (var i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ia], {type:mimeString});
+}
+
+function _blobToDataURL(blob) {
+    var u8a=_blobToUint8Array(blob)
+    return 'data:'+blob.type+';base64,'+btoa(_Uint8ToString(u8a));
+}
+
+function _blobToUint8Array(b) {
+    var uri = URL.createObjectURL(b),
+        xhr = new XMLHttpRequest(),
+        i,
+        ui8;
+
+    xhr.open('GET', uri, false);
+    // The magic happens below, which overrides the MIME type, forcing the browser to treat it as plain text, 
+    // using a user-defined character set. This tells the browser not to parse it, and to let the bytes pass through unprocessed.
+    xhr.overrideMimeType('text\/plain; charset=x-user-defined'); // NOTE: Key #1
+    xhr.send(null);
+
+    URL.revokeObjectURL(uri); // Avoid resource leak
+    if (xhr.status != 200) return [];
+
+    ui8 = new Uint8Array(xhr.responseText.length); // NOTE: was response, not responseText.  Not sure if it matters.
+
+    for (i = 0; i < xhr.responseText.length; ++i) {
+        ui8[i] = xhr.responseText.charCodeAt(i) & 0xff; // NOTE: Key #2
+    }
+
+    return ui8;
+}
+
+
+function _load_binary_resource(url) {
+  var req = new XMLHttpRequest();
+  req.open('GET', url, false);
+  //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
+  req.overrideMimeType('text\/plain; charset=x-user-defined');
+  req.send(null);
+  if (req.status != 200) return '';
+  //window.req=req;
+  //var b=new Blob; // Convert data to blob?
+  return req.responseText; // NOTE: Use return: var abyte = _load_binary_resource(url).charCodeAt(x) & 0xff; // throw away high-order byte (f7)
+}
+
+function _save_binary_resource(url, data) {
+    var xhr = new XMLHttpRequest();
+  //req.open('PUT', url, false);
+  //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
+  //req.overrideMimeType('text\/plain; charset=x-user-defined');
+  //req.send(null);
+    xhr.open('PUT', url);
+    xhr.responseType = "blob"; // force the HTTP response, response-type header to be blob
+    xhr.onload = () => {
+        if (xhr.status != 204) {
+            console.error("status="+xhr.status+"; retry later");
+        }
+    }
+    var blob=new Blob([data], {type: 'text/plain; charset=x-user-defined'});
+    xhr.send(blob);
+    return true;
+}
+
+// For short input, Decode base64 back to Uint8Array
+//var u8_2 = new Uint8Array(atob(b64encoded).split("").map(function(c) {
+//    return c.charCodeAt(0); }));
+//    OR use below: var b64encoded = btoa(Uint8ToString(u8));
+function _Uint8ToString(u8a) {
+  var CHUNK_SZ = 0x8000;
+  var c = [];
+  for (var i=0; i < u8a.length; i+=CHUNK_SZ) {
+    c.push(String.fromCharCode.apply(null, u8a.subarray(i, i+CHUNK_SZ)));
+  }
+  return c.join("");
+}
+
+function _asyncBlobToDataURL(blob, callback) {
+    var a = new FileReader();
+    a.onload = function(e) {callback(e.target.result);}
+    a.readAsDataURL(blob);
+}
+
+function _blobToString(b) {
+    var u, x;
+    u = URL.createObjectURL(b);
+    x = new XMLHttpRequest();
+    x.open('GET', u, false); // although sync, you're not fetching over internet
+    x.send();
+    URL.revokeObjectURL(u);
+    return x.responseText;
+}
+
+function _asyncBlobToString(blob, done) {
+    var reader = new FileReader();
+    reader.onload = function() { done(reader.result); }
+    reader.readAsText(blob);   
+}
+
+function _init(isDs) {
+    _h = $(window).height();
+    _w = $(window).width();
+    
+    if(isDs) { _initWebSock(); }
+    // Started in app-init.js // else { _initApp(); }
+//     if(dirTree && dirTree != '') {
+//         alert('dirTree='+dirTree);
+//         dirTree=JSON.parse(dirTree);
+//     }
+    
+//    if(typeof OnStart === 'function') { OnStart(); }
+}
+
 ////////////////////////////////
+// Modified _WebSock by Charles Wilt from 11/2/16 post to DroidScript Google Group
+////////////////////////////////
+function _WebSock( id, ip, port, options )
+{
+   var m_OnMessage = null;
+   var m_sock = null;
+   var m_timer = null;
+   
+   var m_OnOpen = null;
+   var m_OnClose = null;
+   var m_IsOpen = null;
+
+   
+    console.log( "Opening web socket:" + id );
+   if( !port ) port = 8080;
+  m_sock = new WebSocket( "ws://"+ip+":"+port );
+  m_sock.onopen = OnOpen;
+ m_sock.onmessage = OnMessage;
+   m_sock.onclose = OnClose;
+       m_sock.onerror = OnError;
+       m_timer = setInterval( CheckSocket, 7000 );
+   
+    function OnOpen() {
+        console.log( "Socket Open: "+id );
+       if (m_OnOpen) m_OnOpen(id);
+       m_IsOpen=true;
+   }
+   
+   function CheckSocket() {  
+       if( m_sock.readyState != 1 ) {
+           console.log( "Re-opening web socket:" + id );
+           m_sock = new WebSocket( "ws://"+ip+":"+port );
+       }
+   }
+   
+   function OnClose() {
+        console.log( "Socket Closed: "+id );
+        if (m_OnClose) m_OnClose(id);
+       m_IsOpen=false;
+   }
+   
+   function OnError(e) { console.log( "Socket Error: "+e.data ); }
+   function OnMessage( msg ) { if( m_OnMessage ) m_OnMessage( msg.data ); }
+   
+   
+ this.Close = function() { m_sock.close(); }
+   this.GetSocket = function() { return m_sock; }
+   this.SetOnMessage = function( callback ) { m_OnMessage = callback; }
+   
+   this.SetOnOpen = function( callback ) { m_OnOpen = callback; }
+   this.SetOnClose = function( callback ) { m_OnClose = callback; }
+   this.IsOpen = function(){return m_IsOpen;}
+   
+   this.Send = function( msg ) {
+       if( m_sock.readyState != 1 ) console.log( "Socket not ready:"+m_sock );
+        else m_sock.send( msg );
+   }
+   return this;
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    function _findTarget(ev) {
+        for(var xa=1; xa<__idMap.length; xa++) {
+            if(__idMap[xa] && __idMap[xa].impl[0] == ev.currentTarget) {
+                return __idMap[xa];
+            }
+        }
+        return null;
+    }
+    function _handleTouchEvent( jqHandler, action, callback ) {
+        this.touchable=true;
+        var obj=this;
+        jqHandler.call(this, function(ev) {
+            ev.preventDefault(); // Needed to prevent default link action.  Apparently using mouseup doesn't return callback value.
+            if(obj.touchable) { 
+                var bcr=obj[0].getBoundingClientRect(); // x,y,width,height,top,bottom,left,right
+                ev.X=(ev.pageX - bcr.x) / obj[0].width;
+                ev.Y=(ev.pageY - bcr.y) / obj[0].height;
+                ev.action=action;
+                ev.source=_findTarget(ev);
+                callback(ev);
+            }
+            return false; 
+            
+            //ckTouch.bind(callback)(ev);
+        }); 
+        this.css("cursor",(callback?"pointer":"auto"));
+    }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
 /*

@@ -21,26 +21,32 @@
           |MyApp.js
           |app.html <= THIS FILE
 -->
-<html manifest=".appcache">
+<html manifest=".appcache" style="overflow:hidden">
 <head>
 <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
 <meta content="utf-8" http-equiv="encoding">
 <meta name="viewport" content="width=device-width">
 
+<link rel="stylesheet" type="text/css" href="../droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.css" />
+
+<!-- link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous" -->
+
 <!-- script type="text/javascript" src="https://rawgit.com/w3core/import.js/master/import.min.js"></script -->
 <script type="text/javascript" src="../droidscript-web/import.min.js"></script>
 
 <script>
+    window.appCached=false;
+    window.appLoaded=false;
     var appCache = window.applicationCache;
     _loadStarted=Date.now();
     
     function _loadProgress(num, prog) { // Report progress while loading
         var e=(Date.now()-_loadStarted)/1000;
-        console.log("Loading #"+num+": "+e);
+        //console.log("Loading #"+num+": "+e);
         var _loader=document.getElementById("_loader");
         if(_loader) {
             if(!prog) { _loader.style.display='none'; }
-            else { document.getElementById("_loadpct").innerHTML=prog; }
+            else { document.getElementById("_loadpct").innerHTML=prog; _loader.style.display='inline-block'; }
         }
     }
     
@@ -48,8 +54,9 @@
     
     (() => { // NOTE: Start of internal function scope
         var deps1= ["../droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.css", // Use the JQueryMobile for our UI
-                    "../droidscript-web/jquery-mobile-font-awesome/css/jqm-font-awesome-usvg-upng.min.css",
-                    "../droidscript-web/font-awesome/css/font-awesome.min.css",
+                    "https://use.fontawesome.com/releases/v5.1.0/css/all.css",
+                    //"../droidscript-web/jquery-mobile-font-awesome/css/jqm-font-awesome-usvg-upng.min.css",
+                    //"../droidscript-web/font-awesome/css/font-awesome.min.css",
                     "../droidscript-web/jquery-mobile-cards/card-css.css",
                     "../droidscript-web/wrappers/jquery-mobile.css",
 
@@ -57,8 +64,8 @@
                     "../droidscript-web/style.css",
 
                     "../droidscript-web/jquery/jquery-1.12.1.min.js"];
-        var deps2= ["../droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.js",
-                    "http://aldonline.github.io/syncify/build/syncify-1.1.0.min.js"];
+        var deps2= ["../droidscript-web/jquery-mobile/jquery.mobile-1.4.5.min.js"];
+                    //"https://aldonline.github.io/syncify/build/syncify-1.1.0.min.js"];
         var deps3= ["../droidscript-web/wrappers/jquery-mobile.js"];
         var deps4= ["../droidscript-web/wrappers/jquery-mobile-init.js",
                     "../droidscript-web/app.js",
@@ -173,9 +180,9 @@
         }
         
         function handleCacheEvent(e) {
-            if(e.type != 'progress') console.log('Cache: ',e,' STATUS=',cacheStatus());
+            if(e.type != 'progress') console.log('Cache',e.type,'STATUS=',cacheStatus());
             if(e.type === 'progress') {
-            lastCacheEvent=e;
+                lastCacheEvent=e;
                 //console.log('e='+e+';loaded='+e.loaded+';total='+e.total);
                 var xa=e.loaded,olen=e.total;
                 if(xa && olen) {
@@ -185,31 +192,41 @@
                 }
                 else { _loadProgress(0,'caching...'); }    
             }
-            if (appCache.status == window.applicationCache.UPDATEREADY) {
-                appCache.swapCache();  // The fetch was successful, swap in the new cache.
+            else if(e.type === 'updateready') {
+                //if (appCache.status == window.applicationCache.UPDATEREADY) {
+                    try { appCache.swapCache(); } // The fetch was successful, swap in the new cache.
+                    catch(e) { console.log("Error swapping cache:",e); }
+                    //if (confirm('A new version of this site is available. Load it?')) { window.location.reload(); }
+                    window.location.reload();
+                //}
+            }
+            if(e.type === 'updateready' || e.type === 'noupdate' || e.type === 'cached') {
+                window.appCached=true;
+                if(window.appLoaded) { _initApp(); }
             }
         }
 
         function handleCacheError(e) { console.error('Error: Cache failed to update: '+e); }
 
-        //appCache.update(); // Attempt to update the user's cache.
-         appCache.addEventListener('cached', handleCacheEvent, false);       // Fired after the first cache of the manifest.
-         appCache.addEventListener('checking', handleCacheEvent, false);     // Checking for an update. Always the first event fired in the sequence.
-         appCache.addEventListener('downloading', handleCacheEvent, false);  // An update was found. The browser is fetching resources.
-         appCache.addEventListener('error', handleCacheError, false);        // Manifest returns 404 or 410, download failed, or manifest changed while the downloading.
-         appCache.addEventListener('noupdate', handleCacheEvent, false);     // Fired after the first download of the manifest.
-         appCache.addEventListener('obsolete', handleCacheEvent, false);     // Fired if the manifest file returns a 404 or 410 (results in the application cache being deleted)
-         appCache.addEventListener('progress', handleCacheEvent, false);     // Fired for each resource listed in the manifest as it is being fetched.
-         appCache.addEventListener('updateready', handleCacheEvent, false);  // Fired when the manifest resources have been newly redownloaded.
-        
-        // Check if a new cache is available on page load.
-        window.addEventListener('load', function(e) {
-            window.applicationCache.addEventListener('updateready', function(e) {
-                if (window.applicationCache.status == window.applicationCache.UPDATEREADY) { // Browser downloaded a new app cache.
-                    if (confirm('A new version of this site is available. Load it?')) { window.location.reload(); }
-                } else { /* Manifest didn't change. Nothing new to server. */ }
-            }, false);
-        }, false);        
+        appCache.addEventListener('cached', handleCacheEvent, false);       // Fired after the first cache of the manifest.
+        appCache.addEventListener('checking', handleCacheEvent, false);     // Checking for an update. Always the first event fired in the sequence.
+        appCache.addEventListener('downloading', handleCacheEvent, false);  // An update was found. The browser is fetching resources.
+        appCache.addEventListener('error', handleCacheError, false);        // Manifest returns 404 or 410, download failed, or manifest changed while the downloading.
+        appCache.addEventListener('noupdate', handleCacheEvent, false);     // Fired after the first download of the manifest.
+        appCache.addEventListener('obsolete', handleCacheEvent, false);     // Fired if the manifest file returns a 404 or 410 (results in the application cache being deleted)
+        appCache.addEventListener('progress', handleCacheEvent, false);     // Fired for each resource listed in the manifest as it is being fetched.
+        appCache.addEventListener('updateready', handleCacheEvent, false);  // Fired when the manifest resources have been newly redownloaded.
+
+        // FIXME: Firefox says non-SSL is insecure: appCache.update(); // Attempt to update the user's cache.
+
+//         // Check if a new cache is available on page load.
+//         window.addEventListener('load', function(e) {
+//             window.applicationCache.addEventListener('updateready', function(e) {
+//                 if (window.applicationCache.status == window.applicationCache.UPDATEREADY) { // Browser downloaded a new app cache.
+//                     if (confirm('A new version of this site is available. Load it?')) { window.location.reload(); }
+//                 } else { /* Manifest didn't change. Nothing new to server. */ }
+//             }, false);
+//         }, false);        
 
         // Determine whether we need a more detailed progress (slow connection)
         _fetchSimilarHeaders((heads) => { 
@@ -257,7 +274,7 @@
 </style>
 </head>
 
-<body onresize="_onResize()" >
+<body id="_pageBody" onresize="_onResize()">
 	<div id="pageMain" data-role="page" class="ui-responsive-panel" >
 		<div id="contentMain" role="main" class="ui-content no-padding"></div>
         <div id="_loader"><div class="loader"></div><br /><span id="_loadpct">0%</span></div>

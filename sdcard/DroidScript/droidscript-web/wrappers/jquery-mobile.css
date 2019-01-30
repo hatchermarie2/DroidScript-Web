@@ -2,12 +2,15 @@
 /*--- BASIC LAYOUT ---------*/
 
 .vertical-child {
-	display : inline-block !important;
+	/*display : inline-block !important;*/
+	display : block !important;
 	overflow: hidden;
+    margin: auto;
 }
 
 .horizontal-child {
 	display : inline-block !important;
+    margin: auto; /* !important; We can't change it later, this way*/
 	vertical-align: top;
 	overflow: hidden;
 }

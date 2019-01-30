@@ -58,7 +58,6 @@ const _SERVER='DroidScript-Web on '+_CPU0.speed+'Mhz '+_CPU0.model;
 var DSub=fsp.join("sdcard", "DroidScript");
 var DSWEB=fsp.sep+fsp.join(DSub, "droidscript-web");
 var WebRoot=fsp.join(AppRoot, DSWEB, "html");
-var RunService=fsp.join(DSWEB,'server','runservice.js');
 
 var LocalNet='',LocalIP='';
 var options={
@@ -342,7 +341,27 @@ function httpHandler(request, response, isHttps) {
         // FIXME: Provide option for access control to deny internal (Local) access to an app
         // FIXME: e.g. if(addr.indexOf(LocalNet) !== 0) // Allow access to app, else redirect to another app or index
         var fspl=file.split('/');
-        if(file.indexOf("/app/") === 0) {
+        if(file === "/thumbnail") {
+            // srcImg, dstImg, width, height); 
+            var m=[]; 
+            usplit[1].split('&').forEach((c) => { var s=c.split('='); m[s[0]]=s[1]; })
+            console.log(`srcimg=${m.srcimg},dstimg=${m.dstimg},width=${m.width},height=${m.height}`);
+            const gm = require('gm').subClass({imageMagick: true});
+            // FIXME: NEED TO SANITY CHECK OUR INPUTS!
+            var picture={path:'.'+m.srcimg, thumb_path: '.'+m.dstimg};
+            gm(picture.path)
+                .resize(m.width+'!', m.height+'!', '^')
+                .gravity('center')
+                .extent(m.width, m.height)
+                .write(picture.thumb_path, function (error) {
+                    if(error) {
+                        console.log(error.message);
+                        return respond(88,response, cookies, 404, null, null, "ERROR: Creating thumbnail: "+error.message.split('\n')[0]);
+                    }
+                    return respond(89,response, cookies, 200, null, null, "OK");
+                });
+        }
+        else if(file.indexOf("/app/") === 0) {
             //console.log("file=",file);
             var sub=file.substr(5);
             var paths=sub.split('/');
@@ -381,7 +400,7 @@ function httpHandler(request, response, isHttps) {
                 return;
             }
         }
-        else if(file == '/favicon.ico') {
+        else if(file == '/favicon.ico') { // FIXME: Implement favicon support?
             return serveTemplateFile(fsp.join(WebRoot, '404.html'), request, response, cookies, 404, {app:""});
         }
         else if(file === "/sdcard" || file.indexOf("/sdcard/") === 0) {
@@ -486,7 +505,11 @@ function respond(at,response, cookies, code, contentType, contentLen, content, r
         if      (_ALLOWDEFL && acceptEncoding.match(/\bdeflate\b/)) { headers['content-encoding'] = 'deflate'; }
         else if (_ALLOWGZIP && acceptEncoding.match(/\bgzip\b/))    { headers['content-encoding'] = 'gzip';    }
     }
+    if(response.request.method === 'HEAD' && code >= 400) { contentLen=0; }
     if(contentLen && !headers['content-encoding']) { headers['Content-Length']=contentLen; }
+    if(response.request.method === 'HEAD' && !headers['Content-Length']) { // Add extra information only for HEAD requests
+        headers['Content-Length']=contentLen;
+    }
     if(redirect)   { headers['Location']=redirect; }
     if(lastModified) {
         var maxAge=_MAXAGE; // If-modified-since may be used if older than this many seconds
@@ -500,7 +523,7 @@ function respond(at,response, cookies, code, contentType, contentLen, content, r
     response.writeHead(code, headers);
     //outln(request, "HEADERS=",headers);
     if(content && response.request.method !== 'HEAD') { response.write(content); response.end(); }
-    if(code === 204) { response.end(); } // NO content
+    if(code === 204 || code >= 400) { response.end(); } // NO content, or error
     return headers;
 }
 
@@ -667,7 +690,9 @@ function sync(conn) {
                     var sub=fsp.join(elem,el);
                     for(var xa=0; xa<_blacklist.length; xa++) {
                         var skip=_blacklist[xa];
-                        if(skip === sub || sub.indexOf('/.') === 0) { return false; } // Ignore blacklist and hidden files
+                        if(skip === sub || sub.indexOf('/.') === 0 || sub.indexOf("/sdcard/DroidScript/droidscript-web") === 0) {
+                            return false;
+                        } // Ignore blacklist, hidden files, and droidscript-web
                     }
                     return true;
                 });
@@ -708,6 +733,7 @@ function sync(conn) {
 // }
 
 function handleWsMsg(message) {
+    console.log("handleWsMsg: "+message.utf8Data);
     if (message.type === 'utf8') {
         var obj=JSON.parse(message.utf8Data);
         //console.log('RCV ' + message.utf8Data);
@@ -723,8 +749,14 @@ function handleWsMsg(message) {
             console.log("COMMAND "+obj.cmd); // "packageName":packageName, "className":className, "options":options
             var svc=new _DS_Svc(obj.packageName, obj.className, obj.options, obj.id, this);
         }
-        else if(obj.type === "cmd") {
+        else if(obj.type === "cmd" && obj.cmd === "SendService") {
             console.log("COMMAND "+obj.cmd);
+            //ipc.of.service.emit(obj.cmd,JSON.stringify({id:obj.id, msg:obj.msg})); // E.g. "stop"
+            try { ipc.of.service.emit('SendService',JSON.stringify({id:obj.id, msg:obj.msg})); }
+            catch(e) { console.log("SendService FAILED: "+JSON.stringify(obj.msg)+": "+e.message); }
+        }
+        else if(obj.type === "cmd") {
+            console.log("COMMAND "+obj.cmd+" IGNORED");
         }
         else { console.log("Unknown obj: "+message.utf8Data); }
     }
@@ -736,7 +768,6 @@ function handleWsMsg(message) {
 }
 
 function getServiceName(conn) {
-    //return fsp.join(conn.rootPath,"sdcard","DroidScript","droidscript-web","server","runservice.js");
     return conn.url.path.split('/')[2];
 }
 
@@ -751,11 +782,17 @@ function doConnect() {
                         console.log("SEND: "+this.send);
                         ipc.of.service.emit(this.send,null); // E.g. "stop"
                     }
-                    else { ipc.of.service.emit('inituser',JSON.stringify({user:'test'})); }
+                    else {
+                        var username="test";
+                        var user=username+":"+new Date().valueOf(); // Date of login to make this id unique
+                        ipc.of.service.emit('inituser',JSON.stringify({user:user})); 
+                    }
+                    this.conn.sendUTF(JSON.stringify({"type":"ServiceReady", "id": this.clientId}));
                 }.bind(this));
                 ipc.of.service.on('disconnect',function() {}.bind(this));
                 ipc.of.service.on('message', function(data) {
                     console.log('got a message from '+this.id+' Service : ', data);
+                    this.conn.sendUTF(JSON.stringify({"type":"cmd", "data":data}));
                 }.bind(this));
             }.bind(this)
         );
@@ -767,11 +804,16 @@ function checkConnect() {
     setTimeout(function() {
         //console.log('Connected: '+this.connected);
         if(!this.connected) {
-            if(!this.connecting) {
+            console.log("tries="+this.tries);
+            if(!this.connecting && this.tries>10) {
                 this.connecting=true;
                 var path=fsp.join(svrbase,'droidscript_svc.js');
                 var sProc = cp.fork(path, ['--id', this.id], {detached:true});
                 //setTimeout(doConnect.bind(this), 0);
+            }
+            if(this.tries % 20 == 0) {
+                this.connecting=false;
+                cp.execSync("killall 'droidscript_svc "+this.sName+"' || true");
             }
             setTimeout(doConnect.bind(this), 200);
         }
@@ -791,34 +833,8 @@ function _DS_Svc(packageName, classname, options, id, conn) {
 
     var sName=getServiceName(conn);
     console.log("Connecting to service "+sName);
-//     if (runningSvc(sName)) {
-//             return;
-//     }
-//     this.sProc = cp.fork(RunService);
-//     var pName=fsp.join(os.tmpdir(), 'SERVICE-'+msg.start.replace(/\//g,'_')+'.pid');
-//     fs.writeFileSync(pName, this.sProc.pid);
-// 
-//     this.sProc.on('message', (msg) => {
-//         //_app.Fiber(function() { // Callbacks need a new fiber
-//         //console.log('PARENT got message:', msg);
-//         if(msg._serviceReady) { this.onServiceReady(); }
-//         else if(msg._serviceLog) {
-//             process.stdout.write(colorsafe.gray(msg._serviceLog));
-//         }
-//         else if (msg.msg && msg.msg._serviceForward) {
-//             var s=msg.msg._serviceForward;
-//             this.sProc.send({_serviceReply:prompt(s.promptMsg, s.dftVal)}); // Send reply to child (service)
-//             //console.log("Service _send:"+s.fn+JSON.stringify(s.args));
-//             //_send(s.fn, s.args, _app);
-//         }
-//         else { this.onMessage(msg.msg); }
-//         //}.bind(this)).run();
-//     });
-// 
-//     this.sProc.send({start: sName});
-
     ipc.config.id   = sName;
-    doConnect.call({id:ipc.config.id, connected:false, tries:0});
+    doConnect.call({id:ipc.config.id, connected:false, tries:0, conn:conn, clientId:id, sName:sName});
 
 //    _app.services.push(this);
 }

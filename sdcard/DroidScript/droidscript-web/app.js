@@ -14,7 +14,7 @@
  * limitations under the License.
  */
  
-// _dbg = true; _map = []; _scripts = [];
+// _dbg = true; __idMap = []; _scripts = [];
 // _cbMap = []; _cbId=0; _docs = false; _busy = false;
 // _btl = null; _lvw = null; 
 _ldg = null; 
@@ -23,16 +23,53 @@ _ynd = null;
 // _inf = null; _rec = null; _pst = null;
 // _sms = null; _eml = null; 
 // _crp = null; _spr = null;
-var _map = [];
+var __idMap = [];
 var _nextId = 1;
 
+var _map = null,_lay=null; // debugging
+
+function _findElement(at, el, findMe) {
+    var tag=findMe.tagName;
+    var x=el.getElementsByTagName(tag);
+    var found=false;
+    var ids=[];
+    for(var xa=0; xa<x.length; xa++) {
+        var i=x[xa];
+        var id=i.id;
+        //console.log(id); 
+        var f=ids[id];
+        if(!f) { ids[id]=xa+1; }
+        else { console.log("cloud DUPLICATE "+id+" at "+xa+" with "+(f-1)); }
+        if(id == findMe.id) {
+            var msg='_findElement('+xa+')#'+at+(el.id?'#'+el.id:'')+': '+findMe.id+"; equal1? "+(i == findMe)+"; equal2? "+(i === findMe)
+            console.log(msg); //alert(msg);
+            found=true;
+            if(at == 'cloud10:document') {
+                console.log("cloud FINDING "+_map.impl[0].id+" in "+id+".");
+                _findElement("cloud11:lay", i, _map.impl[0]); // Find map in THIS instance of lay (e.g. lay28)
+            }
+        }
+    }
+    if(!found) { var msg='_findElement#'+at+' NOT FOUND: '+findMe.id; console.log(msg); } //alert(msg); }
+    _ids=ids;
+    //for(i in ids) {
+    //    console.log("cloud ids: "+ids[i]+"="+(i-1));
+    //}
+}
+
+function __debug(msg) {
+    //if(_debug || _dbg) console.log("__debug: "+msg+"; _map="+app._map);
+    //if(app._map && (_debug || _dbg)) {
+    //    _findElement("__debug",document,app._map.impl[0]);
+   // }
+}
 
 function App(impl) 
 {			
 	this.impl = impl;
 
 	this.GetType = function() { return "App"; }
- 	this.GetObjects = function() { return _map; }
+ 	this.GetObjects = function() { return __idMap; }
 // 	this.Exit = function( kill ) { prompt( "#", "App.Exit("+kill ); }
 // 	this.ToBack = function() { prompt( "#", "App.ToBack(" ); }
 // 	this.Execute = function( js ) { prompt( "#", "App.Execute("+js ); } 
@@ -50,7 +87,20 @@ function App(impl)
 // 	this.SendMessage = function( msg ) { prompt( "#", "App.SendMessage(\f"+msg ); }
  	this.LoadScript = function( url, callback ) { 
         //_LoadScript( url, callback ); 
-        $import(url, callback);
+        //$import(url, callback);
+        
+        var req = new XMLHttpRequest();
+        try { req.open('GET', url, false); }
+        catch(e) { throw new Error(e.message+"; url="+url); }
+        req.onreadystatechange = function(){
+            if (req.readyState == 4) {
+                var s = document.createElement("script");
+                s.appendChild(document.createTextNode(req.responseText));
+                document.head.appendChild(s);
+            }
+        };
+        req.send(null);       
+        if(callback) { callback(); }
     }
 // 	this.LoadPlugin = function( url ) { _LoadPlugin( url ); }
 // 	this.Try = function( p1,p2,p3 ) { return prompt( "#", "App.Try(\f"+p1+"\f"+p2+"\f"+p3 ); } 
@@ -90,7 +140,7 @@ function App(impl)
 // 	this.GetModel = function() { return prompt( "#", "App.GetModel(" ); }	
 // 	this.IsTablet = function() { return prompt( "#", "App.IsTablet(" )=="true"; }	
 // 	this.IsChrome = function() { return prompt( "#", "App.IsChrome(" )=="true"; }	
-// 	this.SetOnError = function( callback ) { prompt( "#", "App.SetOnError("+callback.name ); }
+ 	this.SetOnError = function( callback ) { this.impl.SetOnError( callback ); }
 // 	this.SetOnKey = function( callback ) { prompt( "#", "App.SetOnKey(\f"+(callback?callback.name:null) ); }
 // 	this.SetOnShowKeyboard = function( callback ) { prompt( "#", "App.SetOnShowKeyboard(\f"+(callback?callback.name:null) ); }
 // 	this.DisableKeys = function( keyList ) { prompt( "#", "App.DisableKeys(\f"+keyList ); }
@@ -122,8 +172,8 @@ function App(impl)
 // 	this.GetResourceId = function( name,options ) { return parseInt(prompt( "#", "App.GetResourceId(\f"+name+"\f"+options )); }	
 // 	this.Vibrate = function( pattern ) { prompt( "#", "App.Vibrate("+pattern ); }
  	this.ShowPopup = function( msg,options ) { this.impl.ShowPopup(msg, options); }
-// 	this.ShowProgress = function( msg,options,clr ) { prompt( "#", "App.ShowProgress(\f"+msg+"\f"+options+"\f"+clr ); }	
-// 	this.HideProgress = function() { prompt( "#", "App.HideProgress(" ); }	
+ 	this.ShowProgress = function( msg,options,clr ) { this.impl.ShowProgress(msg, options, clr ); }	
+ 	this.HideProgress = function() { this.impl.HideProgress(); }	
 // 	this.ShowProgressBar = function( title,percent ) { prompt( "#", "App.ShowProgressBar(\f"+title+"\f"+percent ); }	
 // 	this.UpdateProgressBar = function( percent ) { prompt( "#", "App.UpdateProgressBar(\f"+percent ); }	
 // 	this.HideProgressBar = function() { prompt( "#", "App.HideProgressBar(" ); }	
@@ -158,9 +208,9 @@ function App(impl)
 // 	this.SetTitle = function( title ) { prompt( "#", "App.SetTitle("+title ); }	
  	this.SetMenu = function( list,iconPath ) { this.impl.SetMenu( list, iconPath ); }
  	this.ShowMenu = function() { this.impl.ShowMenu(); }
- 	this.AddLayout = function( layout ) { this.impl.AddLayout(layout.impl); }	
- 	this.RemoveLayout = function( layout ) { this.impl.RemoveLayout(layout.impl); }
- 	this.DestroyLayout = function( layout ) { this.impl.DestroyLayout(layout.impl); }	
+ 	this.AddLayout = function( layout ) { __debug("app.AddLayout "+layout.id); this.impl.AddLayout(layout.impl); }	
+ 	this.RemoveLayout = function( layout ) { __debug("app.RemoveLayout "+layout.id); this.impl.RemoveLayout(layout.impl); }
+ 	this.DestroyLayout = function( layout ) { __debug("app.DestroyLayout "+layout.id); this.impl.DestroyLayout(layout.impl); }	
  	this.MakeFolder = function( fldr ) { this.impl.MakeFolder( fldr ); }	
  	this.GetPrivateFolder = function( name ) { return this.impl.GetPrivateFolder( name ); }	
 // 	this.GetDatabaseFolder = function() { return prompt( "#", "App.GetDatabaseFolder(" ); }
@@ -174,22 +224,23 @@ function App(impl)
 // 	this.GetSpecialFolder = function( name ) { return prompt( "#", "App.GetSpecialFolder(\f"+name ); }
 // 	this.GetEnv = function( name ) { return prompt( "#", "App.GetEnv(\f"+name ); }
  	this.ReadFile = function( file,encoding ) { return this.impl.ReadFile(file, encoding); }
-// 	this.WriteFile = function( file,text,mode,encoding ) { prompt( "#", "App.WriteFile(\f"+file+"\f"+text+"\f"+mode+"\f"+encoding ); }	
+ 	this.WriteFile = function( file,text,mode,encoding ) { this.impl.WriteFile( file, text, mode, encoding ); }	
 // 	this.OpenFile = function( file,type,choose ) { prompt( "#", "App.OpenFile(\f"+file+"\f"+type+"\f"+choose ); }	
 // 	this.OpenUrl = function( url ) { prompt( "#", "App.OpenUrl("+url); }
-// 	this.DeleteFile = function( file ) { prompt( "#", "App.DeleteFile("+file); }
+ 	this.DeleteFile = function( file ) { this.impl.DeleteFile( file ); }
 // 	this.CopyFile = function( src,dest ) { prompt( "#", "App.CopyFile("+src+"\f"+dest); }
 // 	this.CopyFolder = function( src,dest,overwrite,filter ) { prompt( "#", "App.CopyFolder(\f"+src+"\f"+dest+"\f"+overwrite+"\f"+filter); }
 // 	this.DeleteFolder = function( fldr ) { prompt( "#", "App.DeleteFolder("+fldr); }
 // 	this.RenameFile = function( src,dest ) { prompt( "#", "App.RenameFile("+src+"\f"+dest); }
 // 	this.RenameFolder = function( src,dest ) { prompt( "#", "App.RenameFile("+src+"\f"+dest); }
 // 	this.GetFreeSpace = function( mode ) { return parseFloat(prompt( "#", "App.GetFreeSpace(\f"+mode)); }
-// 	this.GetFileDate = function( file ) { var d = parseInt(prompt( "#", "App.GetFileDate(\f"+file)); if( d ) return new Date(d); else return null; }
+ 	this.GetFileDate = function( file ) { return this.impl.GetFileDate( file ); }
+ 	this.GetThumbnail = function( srcImg, dstImg, width, height ) { this.impl.GetThumbnail( srcImg, dstImg, width, height); }
 // 	this.GetFileSize = function( file ) { return parseInt(prompt( "#", "App.GetFileSize(\f"+file)); }
-// 	this.GetLastButton = function() { var ret = prompt( "#", "App.GetLastButton(" ); if( ret ) return (_map[ret]); else return null; }
-// 	this.GetLastToggle = function() { var ret = prompt( "#", "App.GetLastToggle(" ); if( ret ) return (_map[ret]); else return null; }
-// 	this.GetLastCheckBox = function() { var ret = prompt( "#", "App.GetLastCheckBox(" ); if( ret ) return (_map[ret]); else return null; }
-// 	this.GetLastImage = function() { var ret = prompt( "#", "App.GetLastImage(" ); if( ret ) return (_map[ret]); else return null; }
+// 	this.GetLastButton = function() { var ret = prompt( "#", "App.GetLastButton(" ); if( ret ) return (__idMap[ret]); else return null; }
+// 	this.GetLastToggle = function() { var ret = prompt( "#", "App.GetLastToggle(" ); if( ret ) return (__idMap[ret]); else return null; }
+// 	this.GetLastCheckBox = function() { var ret = prompt( "#", "App.GetLastCheckBox(" ); if( ret ) return (__idMap[ret]); else return null; }
+// 	this.GetLastImage = function() { var ret = prompt( "#", "App.GetLastImage(" ); if( ret ) return (__idMap[ret]); else return null; }
 // 	this.IsBluetoothOn = function() { return prompt( "#", "App.IsBluetoothOn(" )=="true"; }
 // 	this.IsScreenOn = function() { return prompt( "#", "App.IsScreenOn(" )=="true"; }
 // 	this.GoToSleep = function() { prompt( "#", "App.GoToSleep(" ); }	
@@ -212,7 +263,7 @@ function App(impl)
 	
 	//These objects auto-release when layout is destroyed.		
 	this.CreateLayout = function( type,options ) { var ret = this.impl.CreateLayout(type, options); if( ret ) return new Lay(ret); else return null; }
-	this.CreateImage = function( file,width,height,options,w,h ) { var ret = this.impl.CreateImage(file, width, height, options, w, h);  if( ret ) return new Img(ret); else return null; }	
+	this.CreateImage = function( file,width,height,options,w,h ) { __debug("app.CreateImage"); var ret = this.impl.CreateImage(file, width, height, options, w, h);  if( ret ) return new Img(ret); else return null; }	
 	this.CreateButton = function( text,width,height,options ) { var ret = this.impl.CreateButton(text, width, height, options); if( ret ) return new Btn(ret); else return null;  }		
 	this.CreateToggle = function( text,width,height,options ) { var ret = this.impl.CreateToggle(text, width, height, options); if( ret ) return new Tgl(ret); else return null;  }		
 	this.CreateCheckBox = function( text,width,height,options ) { var ret = this.impl.CreateCheckBox(text, width, height, options); if( ret ) return new Chk(ret); else return null;  }		
@@ -222,7 +273,7 @@ function App(impl)
 	this.CreateTextEdit = function( text,width,height,options ) { var ret = this.impl.CreateTextEdit(text, width, height, options); if( ret ) return new Txe(ret); else return null; }		
 	this.CreateList = function( list,width,height,options ) { var ret = this.impl.CreateList(list, width, height, options); if( ret ) return new Lst(ret); else return null; }	
 	this.CreateWebView = function( width,height,options,zoom ) { var ret = this.impl.CreateWeb(width, height, options, zoom); if( ret ) return new Web(ret); else return null; }	
-	this.CreateScroller = function( width,height,options ) { var ret = this.impl.CreateScroller(width, height, options); if( ret ) return new Scr(ret); else return null; }	
+	this.CreateScroller = function( width,height,options ) { __debug("app.CreateScroller"); var ret = this.impl.CreateScroller(width, height, options); if( ret ) return new Scr(ret); else return null; }	
 	this.CreateCameraView = function( width,height,options ) { var ret = this.impl.CreateCameraView(width, height, options);  if( ret ) return new Cam(ret); else return null; }	
 	this.CreateVideoView = function( width,height,options ) { var ret = this.impl.CreateVideoView(width, height, options);  if( ret ) return new Vid(ret); else return null; }	
 	this.CreateWebGLView = function( width,height,options ) { var ret = this.impl.CreateWebGLView(width, height, options);  if( ret ) return new WGL(ret); else return null; }	
@@ -279,7 +330,7 @@ function App(impl)
 	
 	// //Helper classes.
 	// this.CreateNxt = function() { var nxtHelp = new _NxtHelp(); return nxtHelp.nxt_CreateNxt(); }
-	this.CreateTabs = function( list,width,height,options ) { return new _Tabs( list,width,height,options ); }
+	this.CreateTabs = function( list,width,height,options ) { __debug("app.CreateTabs"); return new _Tabs( list,width,height,options ); }
 	
 	// //Hybrid objects.
 	// this.CreateGLView = function( width,height,options ) 
@@ -327,36 +378,38 @@ function App(impl)
 	// 	db.Delete = function() { sqlitePlugin.deleteDatabase(db.name,_Log,_Err); }
 	// 	return db;
 	// }
-	this.AddDrawer = function( drawer ) { console.log("FIXME: AddDrawer"); this.impl.AddLayout(drawer); }	
-	this.RemoveDrawer = function( drawer ) { console.log("FIXME: RemoveDrawer"); this.impl.RemoveLayout(drawer); }	
+	this.AddDrawer = function( drawer ) { __debug("app.AddDrawer "+drawer.id); console.log("FIXME: AddDrawer"); this.impl.AddLayout(drawer); }	
+	this.RemoveDrawer = function( drawer ) { __debug("app.RemoveDrawer "+drawer.id); console.log("FIXME: RemoveDrawer"); this.impl.RemoveLayout(drawer); }	
 }
 
 function SObj( impl )
 {
 	this.id = _nextId++;
-	_map[this.id] = this;
+	__idMap[this.id] = this;
 	this.impl = impl;
 	this._Redraw = function() { }
-	this.Destroy = function() { this.impl.Release(); _map[this.id] = null; } 
-    this.Release = function() { this.impl.Release(); _map[this.id] = null; }        
+	this.Destroy = function() { __debug(this.id+".Destroy"); this.impl.Release(); __idMap[this.id] = null; } 
+    this.Release = function() { __debug(this.id+".Release"); this.impl.Release(); __idMap[this.id] = null; }        
 }
 
 function Obj( impl )
 {
 	this.id = _nextId++;
-	_map[this.id] = this;
+	__idMap[this.id] = this;
+    var typ=(new Error().stack.split('\n')[1].split('@')[0]); // Type of object being created
+    __debug("new "+typ+" "+this.id+";"); 
 	this.impl = impl;
-	this._Redraw = function() { this.impl._Redraw( this ); }
-	this.Destroy = function() { this.impl.Release(); _map[this.id] = null; } 
-    this.Release = function() { this.impl.Release(); _map[this.id] = null; }        
+	this._Redraw = function() { __debug(this.id+"._Redraw"); this.impl._Redraw( this ); }
+	this.Destroy = function() { __debug(this.id+".Destroy"); this.impl.Release(); __idMap[this.id] = null; } 
+    this.Release = function() { __debug(this.id+".Release"); this.impl.Release(); __idMap[this.id] = null; }        
     this.SetVisibility = function( mode ) { this.impl.SetVisibility(mode); }    
     this.GetVisibility = function() { return this.impl.GetVisibility(); }   
     this.SetPadding = function( left,top,right,bottom ) { this.impl.SetPadding(left, top, right, bottom); }
     this.SetMargins = function( left,top,right,bottom ) { this.impl.SetMargins(left, top, right, bottom); }
     this.SetBackground = function( file,options ) { this.impl.SetBackground(file, options); }
     this.SetBackColor = function( clr ) { this.impl.SetBackColor(clr); }  
-    this.SetBackGradient = function( colour1,colour2,colour3,options ) { this.impl.SetBackGradient("Linear", colour1, colour2, colour3, options, null, null, null); }  
-    this.SetBackGradientRadial = function( x,y,radius,colour1,colour2,colour3,options ) { this.impl.SetBackGradient("Radial", x, y, radius, colour1, colour2, colour3, options); }  
+    this.SetBackGradient = function( colour1,colour2,colour3,options ) { this.impl.SetBackGradient(colour1, colour2, colour3, options, null, null, null); }  
+    this.SetBackGradientRadial = function( x,y,radius,colour1,colour2,colour3,options ) { this.impl.SetBackGradientRadial(x, y, radius, colour1, colour2, colour3, options); }  
     this.SetPosition = function( left,top,width,height,options ) { this.impl.SetPosition(left, top, width, height, options); }
     this.SetSize = function( width,height,options ) { this.impl.SetSize(width, height, options); }
     this.GetWidth = function( options ) { return this.impl.GetWidth(options); }  
@@ -375,19 +428,44 @@ function Lay( impl )
 	var obj = new Obj( impl );
 	obj.GetType = function() { return "Layout"; }
     obj.SetOrientation = function( orient ) { this.impl.SetOrientation(orient); }    
-    obj.AddChild = function( child,order ) { this.impl.AddChild((child?child.impl:null), order); }
-    obj.RemoveChild = function( child ) { this.impl.RemoveChild((child?child.impl:null)); }    
-    obj.DestroyChild = function( child ) { this.impl.DestroyChild((child?child.impl:null)); }    
+    obj.AddChild = function( child,order ) { __debug(this.id+".AddChild "+child.id); this.impl.AddChild((child?child.impl:null), order); }
+    obj.RemoveChild = function( child ) { __debug(this.id+".RemoveChild "+child.id); this.impl.RemoveChild((child?child.impl:null)); }    
+    obj.DestroyChild = function( child ) { __debug(this.id+".DestroyChild "+child.id); this.impl.DestroyChild((child?child.impl:null)); }    
     obj.ChildToFront = function( child ) { this.impl.ChildToFront((child?child.impl:null)); }
     obj.GetChildOrder = function( child ) { return parseInt(this.impl.GetChildOrder((child?child.impl:null))); }  
     obj.Animate = function( type,callback ) { this.impl.Animate(type, callback); }
     obj.SetTouchable = function( touchable ) { this.impl.SetTouchable(touchable); }
-    obj.detach = function() { this.impl.detach(); }
+    obj.detach = function() { __debug(this.id+".detach"); this.impl.detach(); }
     return obj;
+}
+
+var _images=[];
+
+function _cloud(canvas) {
+    var context = canvas.getContext('2d');
+
+    // draw cloud
+    context.beginPath();
+    context.moveTo(170, 80);
+    context.bezierCurveTo(130, 100, 130, 150, 230, 150);
+    context.bezierCurveTo(250, 180, 320, 180, 340, 150);
+    context.bezierCurveTo(420, 150, 420, 120, 390, 100);
+    context.bezierCurveTo(430, 40, 370, 30, 340, 50);
+    context.bezierCurveTo(320, 5, 250, 20, 250, 50);
+    context.bezierCurveTo(200, 5, 150, 20, 170, 80);
+    context.closePath();
+    context.lineWidth = 5;
+    context.fillStyle = '#8ED6FF';
+    context.fill();
+    context.strokeStyle = '#0000ff';
+    context.stroke();
 }
 
 function Img( impl )
 {
+    // _left,_top,Hide(),Gone(),Show(),IsVisible(),IsEnabled(),SetEnabled(),SetPadding(),SetBackAlpha(),SetColorFilter(),AdjustColor(),ClearFocus()
+    // Tween(),SetPixelMode(),SetName(),GetName(),SetPixelData(),GetPixelColor(),MeasureText(),DrawSamples(),Flatten(),DrawFrame()
+    // Draw(),_parent
     var obj = new Obj( impl ); 
     obj._auto = true; obj._gfb = "";
     obj.GetType = function() { return "Image"; }
@@ -400,7 +478,7 @@ function Img( impl )
 		if( typeof image=="string" ) this.impl.SetImage(image, width, height, options); 
 		else if( image ) this.impl.SetImage(image.attr("src"), width, height, options);
 	}
-	obj.GetImage = function() { return this.impl.GetImage(); }
+	//obj.GetImage = function() { return this.impl.GetImage(); }
 	obj.GetPixelData = function( format,left,top,width,height ) { return this.impl.GetPixelData(format, left, top, width, height); }
     obj.SetSize = function( width,height ) { this.impl.SetSize(width, height); }
     obj.GetHeight = function() { return this.impl.GetHeight(); }
@@ -451,11 +529,14 @@ function Img( impl )
     obj.Skew = function( x,y ) { this.impl.Skew(x, y); }
     obj.Transform = function( matrix ) { this.impl.Transform(matrix); }
     obj.Reset = function() { this.impl.Reset(); }
-    obj.Save = function( fileName,quality ) { this.impl.Save(fileName, quality); }
+    obj.Save = function( fileName,quality ) { 
+        _images.push(obj);        
+        this.impl.Save(fileName, quality); }
     obj.Draw = function( func, p1, p2, p3, p4, p5, p6, p7 ) {
 		if( obj._gfb.length > 2 ) obj._gfb += "\f";
 		obj._gfb += func + "¬" + p1 + "¬" + p2 + "¬" + p3 + "¬" + p4 + "¬" + p5 + "¬" + p6 + "¬" + p7;
 	}
+	
     return obj;
 }
 
@@ -713,9 +794,9 @@ function Scr( impl )
 {
     var obj = new Obj( impl );  
     obj.GetType = function() { return "Scroller"; }
-    obj.AddChild = function( child ) { this.impl.AddChild(child.impl); } //prompt( obj.id, "Scr.AddChild(\f"+(child?child.id:null) ); }
-    obj.RemoveChild = function( child ) { this.impl.RemoveChild(child.impl); } //prompt( obj.id, "Scr.RemoveChild(\f"+(child?child.id:null) ); }    
-    obj.DestroyChild = function( child ) { this.impl.DestroyChild(child.impl); } //prompt( obj.id, "Scr.DestroyChild(\f"+(child?child.id:null) ); }  
+    obj.AddChild = function( child ) { __debug(this.id+".AddChild "+child.id); this.impl.AddChild(child.impl); } //prompt( obj.id, "Scr.AddChild(\f"+(child?child.id:null) ); }
+    obj.RemoveChild = function( child ) { __debug(this.id+".RemoveChild "+child.id); this.impl.RemoveChild(child.impl); } //prompt( obj.id, "Scr.RemoveChild(\f"+(child?child.id:null) ); }    
+    obj.DestroyChild = function( child ) { __debug(this.id+".DestroyChild "+child.id); this.impl.DestroyChild(child.impl); } //prompt( obj.id, "Scr.DestroyChild(\f"+(child?child.id:null) ); }  
     obj.ScrollTo = function( x,y ) { this.impl.ScrollTo(x,y); } //prompt( obj.id, "Scr.ScrollTo\f"+x+"\f"+y ); }
     obj.ScrollBy = function( x,y ) { this.impl.ScrollBy(x,y); } // prompt( obj.id, "Scr.ScrollBy\f"+x+"\f"+y ); }
     obj.GetScrollX = function() { return this.impl.GetScrollX(); } // parseFloat(prompt( obj.id, "Scr.GetScrollX(" )); }
@@ -728,8 +809,8 @@ function Dlg( impl )
     var obj = new Obj( impl );   
     obj.GetType = function() { return "Dialog"; }
     obj.SetOnTouch = function( callback ) { this.impl.SetOnClick(callback); }
-    obj.AddLayout = function( layout ) { this.impl.AddLayout(layout.impl); }	
-	obj.RemoveLayout = function( layout ) { this.impl.RemoveLayout(layout.impl); }	
+    obj.AddLayout = function( layout ) { __debug(this.id+".AddLayout "+layout.id); this.impl.AddLayout(layout.impl); }	
+	obj.RemoveLayout = function( layout ) { __debug(this.id+".RemoveLayout "+layout.id); this.impl.RemoveLayout(layout.impl); }	
 	obj.Show = function() { this.impl.Show(); }
 	obj.Hide = function() { this.impl.Hide(); }
 	obj.Dismiss = function() { this.impl.Dismiss(); }
@@ -768,6 +849,9 @@ function Ldg( impl )
 	obj.SetTextColor = function( clr ) { this.impl.SetTextColor(clr ); } 
 	obj.SetBackColor = function( clr ) { this.impl.SetBackColor(clr ); } 
 	obj.SetSize = function( width,height,options ) { this.impl.SetSize(width, height, options ); }
+    obj.Show = function() { this.impl.Show(); }
+    obj.Hide = function() { this.impl.Hide(); }
+    
     return obj;    
 }
 
@@ -813,8 +897,8 @@ function Ldg( impl )
 //     obj.SetFile = function( file ) { prompt( obj.id, "Aud.SetFile("+file ); } 
 //     obj.SetLooping = function( loop ) { prompt( obj.id, "Aud.SetLooping(\f"+loop ); } 
 //     obj.Close = function() { prompt( obj.id, "Aud.Close(" ); }
-//     obj.Release = function() { prompt( obj.id, "Aud.Release(" ); _map[obj.id] = null; }
-//     obj.Destroy = function() { prompt( obj.id, "Aud.Release(" ); _map[obj.id] = null; }
+//     obj.Release = function() { prompt( obj.id, "Aud.Release(" ); __idMap[obj.id] = null; }
+//     obj.Destroy = function() { prompt( obj.id, "Aud.Release(" ); __idMap[obj.id] = null; }
 //     obj.Play = function() { prompt( obj.id, "Aud.Play(" ); }
 //     obj.Pause = function() { prompt( obj.id, "Aud.Pause(" ); }
 //     obj.Stop = function() { prompt( obj.id, "Aud.Stop(" ); }    
@@ -988,8 +1072,8 @@ function Loc( impl )
 // {
 //     var obj = new Obj( id );  
 //     obj.GetType = function() { return "GLView"; }
-//     obj.Release = function() { prompt( obj.id, "GLV.Release(" ); _map[obj.id] = null; }
-//     obj.Destroy = function() { prompt( obj.id, "GLV.Release(" ); _map[obj.id] = null; }
+//     obj.Release = function() { prompt( obj.id, "GLV.Release(" ); __idMap[obj.id] = null; }
+//     obj.Destroy = function() { prompt( obj.id, "GLV.Release(" ); __idMap[obj.id] = null; }
 //     obj.Execute = function( p1,p2,p3,p4 ) { prompt( obj.id, "GLV.Execute(\f"+p1+"\f"+p2+"\f"+p3+"\f"+p4 ); } 
 //     obj.Exec = function( p1,p2,p3,p4 ) { _gfx.Exec( p1,p2,p3,p4 ); }
 //     obj.SetOnTouch = function( callback ) { prompt( obj.id, "GLV.SetOnTouch(\f"+callback.name ); } 
@@ -1004,8 +1088,8 @@ function Loc( impl )
 // {
 //     var obj = new Obj( id );  
 //     obj.GetType = function() { return "WebGLView"; }
-//     obj.Release = function() { prompt( obj.id, "WGL.Release(" ); _map[obj.id] = null; }
-//     obj.Destroy = function() { prompt( obj.id, "WGL.Release(" ); _map[obj.id] = null; }
+//     obj.Release = function() { prompt( obj.id, "WGL.Release(" ); __idMap[obj.id] = null; }
+//     obj.Destroy = function() { prompt( obj.id, "WGL.Release(" ); __idMap[obj.id] = null; }
 //     obj.Execute = function( p1,p2,p3,p4 ) { prompt( obj.id, "WGL.Execute(\f"+p1+"\f"+p2+"\f"+p3+"\f"+p4 ); } 
 //     obj.Exec = function( p1,p2,p3,p4 ) { _gfx.Exec( p1,p2,p3,p4 ); }
 //     obj.SetOnTouch = function( callback ) { prompt( obj.id, "WGL.SetOnTouch(\f"+callback.name ); } 
@@ -1376,8 +1460,180 @@ function Map( impl )
     return obj;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/********************************************************************
+ * CustomTabs by Warren E. Downs (c. 2016)
+=====================================================================
+ * Replaces DroidScript's built-in _Tabs with one that permits
+ * setting custom text and background colors, using the new
+ * textcolor and backcolor options.
+********************************************************************/
+
+//Tabs object.
+function _Tabs( list, width, height, options )
+{ 
+    const tabHeight=0.096/*0.06/*0.096*/, markHeight=0.015/*0.01/*0.015*/;
+    
+    var opts=options.split(",");
+    for(var xa=opts.length-1; xa>=0; xa--) {
+        var opt=opts[xa].toLowerCase();
+        if(opt.indexOf('backcolor=') == 0) {
+            this.backColor=opt.substr(10);
+            opts.splice(xa,1);
+        }
+        else if(opt.indexOf('textcolor=') == 0) {
+            this.textColor=opt.substr(10);
+            opts.splice(xa,1);
+        }
+    }
+    options=opts.join(",");
+	var lst = list.split(",");
+	this.tabs = [];
+	var curTabName = null;
+	
+	//Disable debug during creation.
+	app.SetDebugEnabled( false );
+	
+	//Create main layout.
+    this.lay = app.CreateLayout( "Linear", "Vertical" );
+    this.lay.SetBackColor("#ff303030");
+    this.lay.SetSize( width, height);
+    this.lay.OnChange = null;
+    this.lay.OnTouch = null;
+    this.lay.parent = this;
+    
+    //Create top (tab strip) layout.
+    this.layTop = app.CreateLayout( "Linear", "Horizontal" );
+    this.layTop.SetSize(width, tabHeight);
+    if(!this.backColor) this.backColor="#ff303030";
+    this.layTop.SetBackColor("#ff000000");
+    this.lay.AddChild( this.layTop ); 
+    
+    //Create body layout.
+    this.layBody = app.CreateLayout( "Frame", "" );
+    if(height == -1) { height=1; }
+    this.layBody.SetSize( width, height-tabHeight);
+    this.lay.AddChild( this.layBody ); 
+    
+    //Add a tab.
+    this.AddTab = function( name )
+    {
+		app.SetDebugEnabled( false );
+		this.layTab = app.CreateLayout( "Linear", "Vertical,VCenter" );
+		this.layTab.SetMargins( 0,0,0.002,0 ); // Divider
+		this.layTab.SetSize( width/lst.length, tabHeight );
+		
+		this.layTab2 = app.CreateLayout( "Linear", "Vertical,VCenter" );
+		this.layTab2.SetMargins( 0,0,0,0 );
+		this.layTab2.SetSize( width/lst.length, markHeight );
+		this.layTab2.SetBackGradient("#FFFF0000","#FF00FF00","#FF0000FF","left-right");
+				
+		this.txtTab = app.CreateText( name, width/lst.length, tabHeight-markHeight/*0.09*/, "FillXY,Bold" );
+		
+		if(this.backColor) this.txtTab.SetBackColor(this.backColor);
+        if(this.textColor) this.txtTab.SetTextColor(this.textColor);
+		this.txtTab.SetPadding( 0,0/*0.03*/,0,0 ); // Using line-height to center
+		this.txtTab.SetOnTouch( _Tabs_OnTouch );
+		this.txtTab.tabs = this; 
+		this.layTab.AddChild( this.txtTab );
+		
+		this.layTab.AddChild( this.layTab2 ); 
+		
+		this.layTop.AddChild( this.layTab );
+		
+		//Save array of tab info.
+		this.tabs[name] = { txt:this.txtTab, clr:this.layTab2, content:null };
+		
+		//Add tab content layout to body.
+		this.tabs[name].content = app.CreateLayout( "Absolute"/*"Linear"*/, "fillxy"+options );
+		this.layBody.AddChild( this.tabs[name].content );
+		app.SetDebugEnabled( true );
+    }
+    
+    //Set tab change callback.
+    this.lay.SetOnChange = function( cb ) {  this.OnChange = cb; }
+    //Set tab touch callback.
+    this.lay.SetOnTouch = function( cb ) {  this.OnTouch = cb; }
+
+    //Return layout for given tab.
+    this.lay.GetLayout = function ( name ) 
+    { 
+        return this.parent.tabs[name].content; 
+    }
+    
+    this.lay.GetTab = function ( name ) 
+    { 
+        return this.parent.tabs[name]; 
+    }
+    
+    //Set current tab.
+    this.lay.ShowTab = function( name )
+    {
+       //Fire callback if set.
+       if( this.OnTouch ) 
+            this.OnTouch( name );
+            
+		app.SetDebugEnabled( false );
+		
+        //Drop out if no change.
+        if( curTabName==name ) { app.SetDebugEnabled(true); return; }
+        curTabName = name;
+        
+        //Get tab info.
+        var tab = this.parent.tabs[name];
+        if( !tab ) { app.SetDebugEnabled(true); return; }
+        
+        //Clear all tab selections.
+        for ( var tb in this.parent.tabs ) {
+    		this.parent.tabs[tb].clr.SetBackGradient("#FF5a5a5a","#FF6e6e6e","#FF5a5a5a","bottom-top");
+		    this.parent.tabs[tb].content.SetVisibility( "Hide" );
+	    }
+	    //Select chosen tab.
+        tab.clr.SetBackGradient("#FF30454e","#FF33C1F6","#FF30454e","bottom-top");
+        tab.content.SetVisibility( "Show" );
+        
+        app.SetDebugEnabled( true );
+        
+       //Fire callback if set.
+       if( this.OnChange ) 
+            this.OnChange( name );
+    }
+    
+    //Add tabs.
+    for( var i=0; i<lst.length; i++ ) {
+		this.AddTab( lst[i] );
+	}
+	
+	//Set default tab.
+	this.lay.ShowTab( lst[0] );
+	
+	//Re-enable debug.
+	app.SetDebugEnabled( true );
+
+    //Return main layout to caller.
+    return this.lay;
+}
+
+//Handle tab clicks.
+function _Tabs_OnTouch( ev )
+{
+    if( ev.action=="Down" ) 
+    {
+		app.SetDebugEnabled( false );
+        var txt = ev.source;
+        txt.tabs.lay.ShowTab( txt.GetText() );
+        app.SetDebugEnabled( true );
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // function _Call( id, func, params ) { 
-// 	func.apply( _map[id], params );
+// 	func.apply( __idMap[id], params );
 // }
 
 // function _Cb( obj, func ) {
