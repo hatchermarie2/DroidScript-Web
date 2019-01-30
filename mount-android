@@ -1,0 +1,44 @@
+#!/bin/bash
+# Must be copied to System /usr/local/bin and added to /usr/local/bin/startkde, etc.
+
+# Mount Android root to Crouton-visible location
+# Also mount external DATA drive to Android-visible location
+
+echo "Mounting folders to/from Android..."
+
+sudo mkdir -p /media/removable/sdcard && sudo mount --bind /run/arc/sdcard/write/emulated/0 /media/removable/sdcard
+
+EXTERN="DATA"
+
+for ex in $EXTERN; do
+	echo "Mounting external $ex to Android..."
+	ext="/media/removable/$ex"
+	etgt=$(basename "$ext")
+
+
+	# Mount external drive(s)
+
+	mkdir -p "/run/arc/sdcard/default/emulated/0/Download/$etgt"
+	mkdir -p "/run/arc/sdcard/read/emulated/0/Download/$etgt"
+	mkdir -p "/run/arc/sdcard/write/emulated/0/Download/$etgt"
+	mount --bind "$ext" /"run/arc/sdcard/default/emulated/0/Download/$etgt"
+	mount --bind "$ext" "/run/arc/sdcard/read/emulated/0/Download/$etgt"
+	mount --bind "$ext" "/run/arc/sdcard/write/emulated/0/Download/$etgt"
+done
+
+delaymount () {
+	sleep 10 # Wait for smbnetfs to mount these shares
+
+	for link in /media/removable/Network/*; do
+		servershare=$(basename "$link" | sed -e 's@-@/@g')
+		tgt="/media/removable/.LAN/$servershare/"
+		for ss in default read write; do
+			src="/run/arc/sdcard/$ss/emulated/0/Download/Network/$servershare"
+			mkdir -p "$src"
+			mount --bind "$tgt" "$src"
+		done
+	done
+}
+
+delaymount &
+
