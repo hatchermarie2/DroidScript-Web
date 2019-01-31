@@ -29,7 +29,21 @@ cd "$DIR"
 
 clear
 
-[ ! -d node_modules/ ] && ./install-deps.sh
+# Install dependencies
+[ ! -d node_modules/ ] && ./scripts/install-deps.sh
+
+# Symlink to Android environment sdcard (if found)
+for d in /media/removable/sdcard/*; do
+	base=$(basename "$d")
+	tgt="sdcard/$base"
+	[ ! -d "$tgt" -a ! -L "$tgt" ] && ln -s "$d" "$tgt"
+done
+for d in /media/removable/sdcard/DroidScript/*; do
+	[ ! -d "$d" ] && continue # Only link directories (not files)
+	base=$(basename "$d")
+	tgt="sdcard/DroidScript/$base"
+	[ ! -d "$tgt" -a ! -L "$tgt" ] && ln -s "$d" "$tgt"
+done
 
 echo "Starting $APP..."
 NODE=node
