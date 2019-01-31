@@ -1,0 +1,19 @@
+#!/bin/bash
+# Must be installed in e.g. /etc/rc.local within Crouton
+
+SERVERS="Server1 Server2"
+
+mkdir -p /media/removable/.LAN
+chown 1000.1000 /media/removable/.LAN
+chmod 770 /media/removable/.LAN
+user=$(grep :x:1000:1000: /etc/passwd | cut -d ':' -f 1)
+su -c 'smbnetfs /media/removable/.LAN -o allow_other' "$user"
+mkdir -p /media/removable/Network
+cd /media/removable/Network
+for server in $SERVERS; do
+	for share in "/media/removable/.LAN/$server"/*; do
+		base=$(basename "$share")
+		echo "$share"
+		ln -s "$share" "$server-$base"
+	done
+done
